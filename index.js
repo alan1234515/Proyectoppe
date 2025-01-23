@@ -290,49 +290,51 @@ app.get("/descargar/:id", async (req, res) => {
     res.status(500).send("Error al descargar el libro.");
   }
 });
-// Ruta para contar a un usuario basado en su IP
-// Ruta para contar a un nuevo usuario
-// Ruta para contar a un nuevo usuario
-app.get("/contar-usuario", async (req, res) => {
-  const ip_usuario = req.ip; // Obtener la IP del usuario
-
+// Middleware para identificar y registrar las visitas
+app.use(async (req, res, next) => {
+  const ip = req.ip; // Captura la IP del cliente
   try {
-    // Consulta para verificar si la IP ya existe en la base de datos
-    const result = await pool.query("SELECT * FROM usuarios WHERE ip = $1", [
-      ip_usuario,
-    ]);
-
-    if (result.rows.length > 0) {
-      // Si ya existe, devuelve un mensaje o actualiza su información
-      return res.json({ message: "Usuario ya contado anteriormente." });
-    } else {
-      // Si no existe, lo insertamos y contamos como un nuevo usuario
-      await pool.query("INSERT INTO usuarios (ip) VALUES ($1)", [ip_usuario]);
-      return res.json({ message: "Usuario contado con éxito." });
+    // Verifica si la IP ya ha sido registrada
+    const result = await pool.query("SELECT ip FROM visitas WHERE ip = $1", [ip]);
+    if (result.rows.length === 0) {
+      // Nueva IP: inserta en la tabla y actualiza el contador
+      await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
+      await pool.query("UPDATE contador_visitas SET total_visitas = total_visitas + 1");
     }
   } catch (error) {
-    console.error("Error al contar usuario:", error);
-    return res.status(500).json({ error: "Error al contar usuario." });
+    console.error("Error registrando visita:", error);
   }
+  next();
 });
 
 // Ruta para obtener el contador de visitas
-app.get("/obtener-contador", async (req, res) => {
+app.get("/contador", async (req, res) => {
   try {
-    // Realiza una consulta a la base de datos para obtener el número de visitas
-    const result = await pool.query(
-      "SELECT visitas FROM contador WHERE id = 1"
-    );
-
-    if (result.rows.length > 0) {
-      const visitas = result.rows[0].visitas;
-      res.json({ count: visitas }); // Devolver el número de visitantes en formato JSON
-    } else {
-      res.status(404).json({ error: "Contador no encontrado" });
-    }
+    const result = await pool.query("SELECT total_visitas FROM contador_visitas");
+    res.json({ totalVisitas: result.rows[0].total_visitas });
   } catch (error) {
-    console.error("Error al obtener el contador:", error);
-    res.status(500).json({ error: "Error al obtener contador de visitas" });
+    console.error("Error obteniendo contador de visitas:", error);
+    res.status(500).send("Error obteniendo el contador de visitas.");
+  }
+});
+
+// Ruta principal para index.html (actualiza para mostrar el contador dinámicamente)
+app.get("/", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT total_visitas FROM contador_visitas");
+    const totalVisitas = result.rows[0].total_visitas;
+    res.send(`
+      <html>
+      <head><title>Contador de Visitas</title></head>
+      <body>
+        <h1>¡Bienvenido a la página!</h1>
+        <p>Total de visitas únicas: ${totalVisitas}</p>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error("Error mostrando index.html con contador:", error);
+    res.status(500).send("Error mostrando la página.");
   }
 });
 

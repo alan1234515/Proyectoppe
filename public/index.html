@@ -59,11 +59,6 @@
             </div>
         </div>
     </header>
-
-    <div id="contador">
-        <h3>Contador de visitantes: <span id="visitantes-count">Cargando...</span></h3>
-    </div>
-
     <!-- Menú con subcategorías -->
     <nav class="menu" style="background-color: #333; padding: 10px; text-align: center; border-radius: 8px;">
         <ul style="list-style-type: none; margin: 0; padding: 0;">
@@ -139,33 +134,5 @@
             </a>
         </div>
     </footer>
-    <script>
-          // Realizar la petición para obtener el número de visitantes
-        $.get("/obtener-contador", function(data) {
-            if (data && data.count !== undefined) {
-                // Actualizar el número de visitantes
-                $("#visitantes-count").text(data.count);  
-            } else {
-                console.error("Error al obtener contador de visitantes", data);
-                $("#visitantes-count").text("Error al cargar contador.");
-            }
-        }).fail(function(error) {
-            console.error("Error de comunicación con el servidor", error);
-            $("#visitantes-count").text("Error al cargar contador.");
-        });
-        // Simular un contador de visitantes usando localStorage
-    document.addEventListener("DOMContentLoaded", function() {
-        // Obtener el contador actual desde localStorage
-        let visitas = localStorage.getItem("visitantes-count") || 0;
-        visitas = parseInt(visitas) + 1; // Incrementar en 1
-        localStorage.setItem("visitantes-count", visitas); // Guardar de nuevo
-
-        // Actualizar el contenido del elemento en el DOM
-        document.getElementById("visitantes-count").textContent = visitas;
-    });
-        
-    </script>
-    
-
 </body>
 </html>
