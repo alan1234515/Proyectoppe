@@ -43,7 +43,7 @@ app.use((req, res, next) => {
   req.setTimeout(1000 * 60 * 10); // 10 minutos
   next();
 });
-
+app.use(cookieParser()); // Usar el middleware cookie-parser
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -290,58 +290,34 @@ app.get("/descargar/:id", async (req, res) => {
     res.status(500).send("Error al descargar el libro.");
   }
 });
-
-import cookieParser from "cookie-parser";
-
-// Inicializa middleware de cookies
-app.use(cookieParser());
-
+// Ruta principal
 app.get("/", async (req, res) => {
+  // Obtener la IP del usuario o un identificador único usando cookies
+  let userId = req.cookies.userId;
+
+  // Si no existe userId en las cookies, lo creamos
+  if (!userId) {
+    // Generar un ID único para el usuario usando su IP + un timestamp (puedes mejorar la generación según tus necesidades)
+    userId = `${req.ip}-${Date.now()}`;
+    
+    // Establecemos la cookie para que persista por un tiempo (por ejemplo, 7 días)
+    res.cookie("userId", userId, { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true });
+  }
+
   try {
-    const userIp = req.ip;
-    let userIdentifier = req.cookies.userIdentifier;
+    // Verificar si este ID de usuario ya existe en la base de datos
+    const result = await pool.query("SELECT * FROM usuarios WHERE user_id = $1", [userId]);
 
-    if (!userIdentifier) {
-      // Si el usuario no tiene cookie, generamos un identificador único
-      userIdentifier = `${userIp}-${Date.now()}`;
-      res.cookie("userIdentifier", userIdentifier, {
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-      }); // 30 días de duración
-    }
-
-    // Verificamos si este usuario ya está contado
-    const result = await pool.query(
-      "SELECT id FROM visitor_count WHERE user_identifier = $1",
-      [userIdentifier]
-    );
-
+    // Si el usuario no está registrado en la base de datos, lo agregamos
     if (result.rows.length === 0) {
-      // Usuario no contado, lo registramos y sumamos 1 al contador
-      await pool.query(
-        "INSERT INTO visitor_count (user_identifier) VALUES ($1)",
-        [userIdentifier]
-      );
+      await pool.query("INSERT INTO usuarios (user_id, ip) VALUES ($1, $2)", [userId, req.ip]);
     }
 
-    // Contamos los visitantes únicos
-    const totalVisitors = await pool.query(
-      "SELECT COUNT(*) AS count FROM visitor_count"
-    );
-
-    // Muestra la página junto con el contador de visitas únicas
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head><title>Contador de Visitas</title></head>
-        <body>
-          <h1>Bienvenido a la Página</h1>
-          <p>Visitantes únicos: ${totalVisitors.rows[0].count}</p>
-        </body>
-      </html>
-    `);
+    // Servir la página principal
+    res.sendFile(path.join(__dirname, "public", "index.html"));
   } catch (error) {
-    console.error("Error en el contador:", error);
-    res.status(500).send("Ocurrió un error.");
+    console.error("Error al verificar el usuario:", error);
+    res.status(500).send("Error al verificar el usuario.");
   }
 });
 
