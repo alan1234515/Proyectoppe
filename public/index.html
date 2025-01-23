@@ -153,7 +153,19 @@
             console.error("Error de comunicación con el servidor", error);
             $("#visitantes-count").text("Error al cargar contador.");
         });
+        // Simular un contador de visitantes usando localStorage
+    document.addEventListener("DOMContentLoaded", function() {
+        // Obtener el contador actual desde localStorage
+        let visitas = localStorage.getItem("visitantes-count") || 0;
+        visitas = parseInt(visitas) + 1; // Incrementar en 1
+        localStorage.setItem("visitantes-count", visitas); // Guardar de nuevo
+
+        // Actualizar el contenido del elemento en el DOM
+        document.getElementById("visitantes-count").textContent = visitas;
+    });
+        
     </script>
+    
 
 </body>
 </html>
