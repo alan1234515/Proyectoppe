@@ -294,25 +294,25 @@ app.get("/descargar/:id", async (req, res) => {
 // Ruta para contar a un nuevo usuario
 // Ruta para contar a un nuevo usuario
 app.get("/contar-usuario", async (req, res) => {
-  const ip_usuario = req.ip;  // Obtener la IP del usuario
-  
+  const ip_usuario = req.ip; // Obtener la IP del usuario
+
   try {
-    // Verificar si la IP del usuario ya está almacenada
-    const result = await pool.query("SELECT * FROM usuarios WHERE ip = $1", [ip_usuario]);
+    // Consulta para verificar si la IP ya existe en la base de datos
+    const result = await pool.query("SELECT * FROM usuarios WHERE ip = $1", [
+      ip_usuario,
+    ]);
 
-    if (result.rows.length === 0) {
-      // Si el usuario no está en la base de datos, lo añadimos
-      await pool.query("INSERT INTO usuarios (ip) VALUES ($1)", [ip_usuario]);
-
-      // Incrementamos el contador
-      await pool.query("UPDATE contador SET visitas = visitas + 1 WHERE id = 1");
-      return res.json({ message: "Nuevo visitante registrado" });
+    if (result.rows.length > 0) {
+      // Si ya existe, devuelve un mensaje o actualiza su información
+      return res.json({ message: "Usuario ya contado anteriormente." });
     } else {
-      return res.json({ message: "El visitante ya fue contado" });
+      // Si no existe, lo insertamos y contamos como un nuevo usuario
+      await pool.query("INSERT INTO usuarios (ip) VALUES ($1)", [ip_usuario]);
+      return res.json({ message: "Usuario contado con éxito." });
     }
   } catch (error) {
-    console.error("Error al contar el usuario:", error);
-    return res.status(500).json({ error: "Hubo un error al registrar al usuario" });
+    console.error("Error al contar usuario:", error);
+    return res.status(500).json({ error: "Error al contar usuario." });
   }
 });
 
