@@ -292,29 +292,49 @@ app.get("/descargar/:id", async (req, res) => {
 });
 // Ruta para contar a un usuario basado en su IP
 app.get("/contar-usuario", async (req, res) => {
-  const ip = req.ip; // Obtener la IP del cliente
+  const ip_usuario = req.ip; // Obtener la IP del usuario
 
   try {
-    // Verificar si la IP ya está en la base de datos
-    const result = await pool.query("SELECT 1 FROM usuarios WHERE ip = $1", [
-      ip,
+    // Verificar si la IP del usuario ya está almacenada
+    const result = await pool.query("SELECT * FROM usuarios WHERE ip = $1", [
+      ip_usuario,
     ]);
 
-    // Si la IP ya existe, no contamos al usuario de nuevo
-    if (result.rows.length > 0) {
-      return res.status(200).json({ message: "Ya has sido contado antes." });
+    if (result.rows.length === 0) {
+      // Si el usuario no está en la base de datos, lo añadimos
+      await pool.query("INSERT INTO usuarios (ip) VALUES ($1)", [ip_usuario]);
+
+      // Incrementamos el contador
+      await pool.query(
+        "UPDATE contador SET visitas = visitas + 1 WHERE id = 1"
+      );
+      return res.json({ message: "Nuevo visitante registrado" });
+    } else {
+      return res.json({ message: "El visitante ya fue contado" });
     }
-
-    // Si no existe en la base de datos, lo insertamos
-    await pool.query("INSERT INTO usuarios (ip) VALUES ($1)", [ip]);
-
-    // Enviamos una respuesta que indica que es la primera vez que cuentan a este usuario
-    res.status(200).json({ message: "Te hemos contado por primera vez." });
   } catch (error) {
-    console.error("Error al registrar usuario:", error);
-    res.status(500).json({ error: "Error al procesar tu solicitud." });
+    console.error("Error al contar el usuario:", error);
+    return res
+      .status(500)
+      .json({ error: "Hubo un error al registrar al usuario" });
   }
 });
+app.get("/obtener-contador", async (req, res) => {
+  try {
+    // Obtener el número total de visitantes únicos desde la tabla "contador"
+    const result = await pool.query(
+      "SELECT visitas FROM contador WHERE id = 1"
+    );
+    const visitas = result.rows[0].visitas;
+    return res.status(200).json({ count: visitas });
+  } catch (error) {
+    console.error("Error al obtener el contador:", error);
+    return res
+      .status(500)
+      .json({ error: "Error al obtener contador de visitas" });
+  }
+});
+
 // Puerto de escucha
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

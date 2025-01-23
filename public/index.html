@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mal hábito lector</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         /* Asegurar el diseño receptivo en dispositivos móviles */
         @media (max-width: 767px) {
@@ -60,7 +61,7 @@
     </header>
 
     <div id="contador">
-        <h3>Contador de visitantes: <span id="visitantes-count">0</span></h3>
+        <h3>Contador de visitantes: <span id="visitantes-count">Cargando...</span></h3>
     </div>
 
     <!-- Menú con subcategorías -->
@@ -139,17 +140,21 @@
         </div>
     </footer>
     <script>
-        // Función para obtener y actualizar el contador de visitantes
-        async function actualizarContador() {
-            try {
-                const response = await fetch("/contar-usuario", { method: "GET" });
-                const data = await response.json();
-                // Actualizar el contador con el número total de visitantes
-                document.getElementById("visitantes-count").innerText = data.totalVisitantes;
-            } catch (error) {
-                console.error("Error al actualizar el contador:", error);
-            }
-        }
+         $(document).ready(function() {
+            // 1. Llamada para contar al usuario
+            $.get("/contar-usuario", function(data) {
+                console.log(data.message);
+            });
+
+            // 2. Llamada para obtener el contador actualizado de visitas
+            $.get("/obtener-contador", function(data) {
+                if (data && data.count) {
+                    $("#visitantes-count").text(data.count);  // Mostrar el número de visitantes
+                } else {
+                    $("#visitantes-count").text("Error al cargar contador.");
+                }
+            });
+        });
     </script>
 
 </body>
