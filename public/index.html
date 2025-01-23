@@ -140,8 +140,8 @@
         </div>
     </footer>
     <script>
-         $(document).ready(function() {
-            // 1. Llamada para contar al usuario
+          $(document).ready(function() {
+            // 1. Llamada para contar al usuario de inmediato
             $.get("/contar-usuario", function(data) {
                 console.log(data.message);
             });

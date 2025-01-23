@@ -291,47 +291,40 @@ app.get("/descargar/:id", async (req, res) => {
   }
 });
 // Ruta para contar a un usuario basado en su IP
+// Ruta para contar a un nuevo usuario
 app.get("/contar-usuario", async (req, res) => {
-  const ip_usuario = req.ip; // Obtener la IP del usuario
-
+  const ip_usuario = req.ip;  // Obtener la IP del usuario
+  
   try {
     // Verificar si la IP del usuario ya está almacenada
-    const result = await pool.query("SELECT * FROM usuarios WHERE ip = $1", [
-      ip_usuario,
-    ]);
+    const result = await pool.query("SELECT * FROM usuarios WHERE ip = $1", [ip_usuario]);
 
     if (result.rows.length === 0) {
       // Si el usuario no está en la base de datos, lo añadimos
       await pool.query("INSERT INTO usuarios (ip) VALUES ($1)", [ip_usuario]);
 
       // Incrementamos el contador
-      await pool.query(
-        "UPDATE contador SET visitas = visitas + 1 WHERE id = 1"
-      );
+      await pool.query("UPDATE contador SET visitas = visitas + 1 WHERE id = 1");
       return res.json({ message: "Nuevo visitante registrado" });
     } else {
       return res.json({ message: "El visitante ya fue contado" });
     }
   } catch (error) {
     console.error("Error al contar el usuario:", error);
-    return res
-      .status(500)
-      .json({ error: "Hubo un error al registrar al usuario" });
+    return res.status(500).json({ error: "Hubo un error al registrar al usuario" });
   }
 });
+
+// Ruta para obtener el contador de visitas
 app.get("/obtener-contador", async (req, res) => {
   try {
-    // Obtener el número total de visitantes únicos desde la tabla "contador"
-    const result = await pool.query(
-      "SELECT visitas FROM contador WHERE id = 1"
-    );
+    // Obtener el número total de visitantes
+    const result = await pool.query("SELECT visitas FROM contador WHERE id = 1");
     const visitas = result.rows[0].visitas;
     return res.status(200).json({ count: visitas });
   } catch (error) {
     console.error("Error al obtener el contador:", error);
-    return res
-      .status(500)
-      .json({ error: "Error al obtener contador de visitas" });
+    return res.status(500).json({ error: "Error al obtener contador de visitas" });
   }
 });
 
