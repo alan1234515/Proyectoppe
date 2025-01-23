@@ -60,7 +60,7 @@
         </div>
     </header>
     <p>Contador de usuarios:</p>
-  <div id="totalUsuarios">Cargando...</div> 
+  <div id="totalUsuarios">Cargando...</div>
     <!-- Menú con subcategorías -->
     <nav class="menu" style="background-color: #333; padding: 10px; text-align: center; border-radius: 8px;">
         <ul style="list-style-type: none; margin: 0; padding: 0;">
@@ -133,17 +133,32 @@
         </div>
     </footer>
     <script>
-    // Hacer una solicitud para obtener el total de usuarios
-    fetch('/total-usuarios')
-      .then(response => response.json())
-      .then(data => {
-        // Mostrar el total de usuarios en la página
-        document.getElementById('totalUsuarios').innerText = `Total de usuarios: ${data.totalUsuarios}`;
-      })
-      .catch(error => {
-        console.error('Error al obtener los usuarios:', error);
-        document.getElementById('totalUsuarios').innerText = 'Error al cargar el número de usuarios.';
-      });
+    // Función para cargar el total de usuarios
+    function obtenerTotalUsuarios() {
+      fetch('/total-usuarios')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('totalUsuarios').innerText = `Total de usuarios: ${data.totalUsuarios}`;
+        })
+        .catch(error => {
+          console.error('Error al obtener los usuarios:', error);
+          document.getElementById('totalUsuarios').innerText = 'Error al cargar el número de usuarios.';
+        });
+    }
+
+    // Registrar la visita del usuario
+    function registrarVisita() {
+      fetch('/visitar')  // Registramos la visita del usuario en el servidor
+        .then(() => {
+          obtenerTotalUsuarios();  // Actualizamos el contador de usuarios al registrar la visita
+        })
+        .catch(error => {
+          console.error('Error al registrar la visita:', error);
+        });
+    }
+
+    // Registrar visita cuando se carga la página
+    window.onload = registrarVisita;
   </script>
 </body>
 </html>

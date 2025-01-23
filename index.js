@@ -43,7 +43,6 @@ app.use((req, res, next) => {
   req.setTimeout(1000 * 60 * 10); // 10 minutos
   next();
 });
-app.use(cookieParser()); // Usar el middleware cookie-parser
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -291,36 +290,42 @@ app.get("/descargar/:id", async (req, res) => {
   }
 });
 // Ruta principal
-app.get("/", async (req, res) => {
-  // Obtener la IP del usuario o un identificador único usando cookies
-  let userId = req.cookies.userId;
+// Middleware para obtener la IP del cliente
+const getIp = (req) => {
+  const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  return ip;
+};
 
-  // Si no existe userId en las cookies, lo creamos
-  if (!userId) {
-    // Generar un ID único para el usuario usando su IP + un timestamp (puedes mejorar la generación según tus necesidades)
-    userId = `${req.ip}-${Date.now()}`;
-    
-    // Establecemos la cookie para que persista por un tiempo (por ejemplo, 7 días)
-    res.cookie("userId", userId, { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true });
-  }
-
+// Endpoint para contar visitas únicas
+app.get("/total-usuarios", async (req, res) => {
   try {
-    // Verificar si este ID de usuario ya existe en la base de datos
-    const result = await pool.query("SELECT * FROM usuarios WHERE user_id = $1", [userId]);
-
-    // Si el usuario no está registrado en la base de datos, lo agregamos
-    if (result.rows.length === 0) {
-      await pool.query("INSERT INTO usuarios (user_id, ip) VALUES ($1, $2)", [userId, req.ip]);
-    }
-
-    // Servir la página principal
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+    const result = await pool.query("SELECT COUNT(*) AS total FROM visitas");
+    res.json({ totalUsuarios: parseInt(result.rows[0].total, 10) });
   } catch (error) {
-    console.error("Error al verificar el usuario:", error);
-    res.status(500).send("Error al verificar el usuario.");
+    console.error("Error al obtener el número de usuarios:", error);
+    res.status(500).send("Error al obtener el número de usuarios.");
   }
 });
 
+// Endpoint para registrar la visita de un usuario
+app.get("/visitar", async (req, res) => {
+  const ip = getIp(req);
+
+  try {
+    // Comprobar si la IP ya está registrada
+    const checkIpResult = await pool.query("SELECT * FROM visitas WHERE ip = $1", [ip]);
+
+    if (checkIpResult.rows.length === 0) {
+      // Si la IP no está registrada, la insertamos
+      await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
+    }
+
+    res.send("Visita registrada");
+  } catch (error) {
+    console.error("Error al registrar la visita:", error);
+    res.status(500).send("Error al registrar la visita.");
+  }
+});
 // Puerto de escucha
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
