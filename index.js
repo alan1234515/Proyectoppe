@@ -290,7 +290,31 @@ app.get("/descargar/:id", async (req, res) => {
     res.status(500).send("Error al descargar el libro.");
   }
 });
+// Ruta para contar a un usuario basado en su IP
+app.get("/contar-usuario", async (req, res) => {
+  const ip = req.ip; // Obtener la IP del cliente
 
+  try {
+    // Verificar si la IP ya está en la base de datos
+    const result = await pool.query("SELECT 1 FROM usuarios WHERE ip = $1", [
+      ip,
+    ]);
+
+    // Si la IP ya existe, no contamos al usuario de nuevo
+    if (result.rows.length > 0) {
+      return res.status(200).json({ message: "Ya has sido contado antes." });
+    }
+
+    // Si no existe en la base de datos, lo insertamos
+    await pool.query("INSERT INTO usuarios (ip) VALUES ($1)", [ip]);
+
+    // Enviamos una respuesta que indica que es la primera vez que cuentan a este usuario
+    res.status(200).json({ message: "Te hemos contado por primera vez." });
+  } catch (error) {
+    console.error("Error al registrar usuario:", error);
+    res.status(500).json({ error: "Error al procesar tu solicitud." });
+  }
+});
 // Puerto de escucha
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
