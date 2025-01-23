@@ -147,6 +147,10 @@
 
     async function cargarLibros(categoria = "") {
       const container = document.getElementById("libros-container");
+      
+      // Limpiar los libros previos
+      container.innerHTML = '';
+
       const loadingMessage = document.createElement("div");
       loadingMessage.classList.add("loading");
       loadingMessage.textContent = "Cargando libros...";
