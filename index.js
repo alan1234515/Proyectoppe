@@ -292,6 +292,7 @@ app.get("/descargar/:id", async (req, res) => {
 });
 // Ruta para contar a un usuario basado en su IP
 // Ruta para contar a un nuevo usuario
+// Ruta para contar a un nuevo usuario
 app.get("/contar-usuario", async (req, res) => {
   const ip_usuario = req.ip;  // Obtener la IP del usuario
   
@@ -318,15 +319,23 @@ app.get("/contar-usuario", async (req, res) => {
 // Ruta para obtener el contador de visitas
 app.get("/obtener-contador", async (req, res) => {
   try {
-    // Obtener el número total de visitantes
-    const result = await pool.query("SELECT visitas FROM contador WHERE id = 1");
-    const visitas = result.rows[0].visitas;
-    return res.status(200).json({ count: visitas });
+    // Realiza una consulta a la base de datos para obtener el número de visitas
+    const result = await pool.query(
+      "SELECT visitas FROM contador WHERE id = 1"
+    );
+
+    if (result.rows.length > 0) {
+      const visitas = result.rows[0].visitas;
+      res.json({ count: visitas }); // Devolver el número de visitantes en formato JSON
+    } else {
+      res.status(404).json({ error: "Contador no encontrado" });
+    }
   } catch (error) {
     console.error("Error al obtener el contador:", error);
-    return res.status(500).json({ error: "Error al obtener contador de visitas" });
+    res.status(500).json({ error: "Error al obtener contador de visitas" });
   }
 });
+
 
 // Puerto de escucha
 const port = process.env.PORT || 3000;

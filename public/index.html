@@ -140,20 +140,18 @@
         </div>
     </footer>
     <script>
-          $(document).ready(function() {
-            // 1. Llamada para contar al usuario de inmediato
-            $.get("/contar-usuario", function(data) {
-                console.log(data.message);
-            });
-
-            // 2. Llamada para obtener el contador actualizado de visitas
-            $.get("/obtener-contador", function(data) {
-                if (data && data.count) {
-                    $("#visitantes-count").text(data.count);  // Mostrar el número de visitantes
-                } else {
-                    $("#visitantes-count").text("Error al cargar contador.");
-                }
-            });
+          // Realizar la petición para obtener el número de visitantes
+        $.get("/obtener-contador", function(data) {
+            if (data && data.count !== undefined) {
+                // Actualizar el número de visitantes
+                $("#visitantes-count").text(data.count);  
+            } else {
+                console.error("Error al obtener contador de visitantes", data);
+                $("#visitantes-count").text("Error al cargar contador.");
+            }
+        }).fail(function(error) {
+            console.error("Error de comunicación con el servidor", error);
+            $("#visitantes-count").text("Error al cargar contador.");
         });
     </script>
 
