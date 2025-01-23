@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subir Libro - Forma 2</title>
+</head>
+<body>
+  <h1>Formulario para subir un libro (Enlace)</h1>
+
+  <form action="/subir-libro-forma2" method="POST" enctype="multipart/form-data">
+    <label for="nombre">Nombre del libro:</label>
+    <input type="text" id="nombre" name="nombre" required><br><br>
+
+    <label for="categoria">Categoría:</label>
+    <input type="text" id="categoria" name="categoria" required><br><br>
+
+    <label for="enlace">Enlace al archivo en la nube:</label>
+    <input type="url" id="enlace" name="enlace" required><br><br>
+
+    <label for="imagen">Imagen del libro (opcional):</label>
+    <input type="file" id="imagen" name="imagen"><br><br>
+
+    <button type="submit">Subir Libro</button>
+  </form>
+</body>
+</html>

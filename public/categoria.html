@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categorías de Libros</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #e0f7fa;
+      padding-bottom: 120px;
+    }
+
+    footer {
+      background-color: #333;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+
+    header {
+      background-color: #333;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 0;
+    }
+
+    select {
+      margin: 20px;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    #filtro-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0 20px;
+    }
+
+    #libros-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .libro {
+      background-color: white;
+      border-radius: 8px;
+      width: 220px;
+      padding: 15px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .imagen-libro {
+      width: 100%;
+      height: 200px;
+      object-fit: contain;
+      border-radius: 8px;
+      background-color: #e0f7fa;
+    }
+
+    .libro h3 {
+      color: #00796b;
+      margin: 10px 0;
+      font-size: 1.2em;
+    }
+
+    .libro p {
+      color: #004d40;
+      margin: 5px 0;
+    }
+
+    .descargar-link {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #00796b;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .descargar-link:hover {
+      background-color: #004d40;
+    }
+
+    .regresar-btn {
+      display: inline-block;
+      margin: 20px;
+      padding: 10px 20px;
+      background-color: #00796b;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .regresar-btn:hover {
+      background-color: #004d40;
+    }
+
+    .loading {
+      text-align: center;
+      font-size: 1.5em;
+      color: #00796b;
+      margin: 20px 0;
+    }
+  </style>
+  <script>
+    let page = 1;
+    const limit = 10;
+
+    async function cargarCategorias() {
+      try {
+        const response = await fetch("/categorias/filtrar");
+        const categorias = await response.json();
+        const categoriaSelect = document.getElementById("categoria-select");
+
+        categoriaSelect.innerHTML = "<option value=''>Seleccione una categoría...</option>";
+        categorias.forEach((categoria) => {
+          const option = document.createElement("option");
+          option.value = categoria.categoria;
+          option.textContent = categoria.categoria;
+          categoriaSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error("Error al cargar las categorías:", error);
+      }
+    }
+
+    async function cargarLibros(categoria = "") {
+      const container = document.getElementById("libros-container");
+      const loadingMessage = document.createElement("div");
+      loadingMessage.classList.add("loading");
+      loadingMessage.textContent = "Cargando libros...";
+      container.appendChild(loadingMessage);
+
+      try {
+        const url = categoria ? `/categorias/libros?categoria=${categoria}&page=${page}&limit=${limit}` : `/categorias/libros?page=${page}&limit=${limit}`;
+        const response = await fetch(url);
+        const libros = await response.json();
+
+        loadingMessage.remove(); // Eliminar el mensaje de carga
+
+        if (libros.length > 0) {
+          libros.forEach((libro) => {
+            const div = document.createElement("div");
+            div.classList.add("libro");
+            div.innerHTML = `
+              <img src="${libro.imagen}" alt="Portada" class="imagen-libro" loading="lazy">
+              <h3>${libro.nombre}</h3>
+              <p>Categoría: ${libro.categoria}</p>
+              <a href="/descargar/${libro.id}" class="descargar-link">Descargar PDF</a>
+            `;
+            container.appendChild(div);
+          });
+          page++;
+        } else {
+          container.innerHTML = "<p>No se encontraron libros.</p>";
+        }
+      } catch (error) {
+        console.error("Error al cargar los libros:", error);
+      }
+    }
+
+    window.onload = async () => {
+      await cargarCategorias();
+      await cargarLibros();
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("categoria-select").addEventListener("change", (event) => {
+        page = 1; // Reiniciar la página a 1 cuando se cambie la categoría
+        cargarLibros(event.target.value);
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Libros por Categoría</h1>
+  </header>
+  
+  <div id="filtro-container">
+    <select id="categoria-select" name="categoria">
+      <option value="">Seleccione una categoría...</option>
+    </select>
+    <a href="index.html" class="regresar-btn">Regresar al inicio</a>
+  </div>
+
+  <div id="libros-container"></div>
+
+  <footer>
+    <p style="font-size: 1.2em;">&copy; 2025 2 "B" Informática. ©Todos los derechos reservados.</p>
+    <div style="font-size: 1.5em;">
+      <b><span style="color: white;">Facebook:</span></b>
+      <a href="https://www.facebook.com/uesmaesmeraldas" target="_blank" style="color: white; text-decoration: none; margin: 0 10px;">
+        <i class="bi bi-facebook"></i>
+      </a>
+    </div>
+  </footer>
+</body>
+</html>

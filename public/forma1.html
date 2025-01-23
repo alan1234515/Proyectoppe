@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subir Libros</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+
+    header {
+      background-color: #0044cc;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 0;
+    }
+
+    .form-container {
+      width: 500px;
+      margin: 20px auto;
+      background-color: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    label {
+      font-size: 14px;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #0044cc;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #003399;
+    }
+
+    .success-message, .error-message {
+      font-weight: bold;
+      padding: 10px;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .success-message {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .error-message {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .category-list {
+      margin-top: 20px;
+    }
+
+    .category-item {
+      margin: 5px;
+      padding: 5px;
+      border: 1px solid #ccc;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .category-item:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Subir un Nuevo Libro</h1>
+  </header>
+
+  <div class="form-container">
+    <form id="upload-form" enctype="multipart/form-data">
+      <label for="nombre">Nombre del Libro:</label>
+      <input type="text" id="nombre" name="nombre" required>
+
+      <label for="categoria_manual">Categoría (escribe una nueva categoría):</label>
+      <input type="text" id="categoria_manual" name="categoria_manual" placeholder="Escribe una categoría..." required>
+
+      <label for="archivo_url">Enlace al Archivo PDF del Libro:</label>
+      <input type="text" id="archivo_url" name="archivo_url" placeholder="Introduce el enlace al PDF" required>
+
+      <label for="imagen">Imagen del Libro (portada):</label>
+      <input type="file" id="imagen" name="imagen" accept="image/jpeg, image/png" required>
+
+      <button type="submit">Subir Libro</button>
+    </form>
+
+    <div class="success-message" id="success-message" style="display: none;"></div>
+    <div class="error-message" id="error-message" style="display: none;"></div>
+
+    <div class="category-list" id="category-list">
+      <h3>Categorías Disponibles:</h3>
+      <div id="categories">
+        <!-- Lista de categorías cargadas dinámicamente -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Cargar categorías desde el servidor
+    async function cargarCategorias() {
+      try {
+        const response = await fetch('/categorias/filtrar');
+        const categorias = await response.json();
+        const categoryList = document.getElementById('categories');
+
+        categorias.forEach(categoria => {
+          const categoryItem = document.createElement('div');
+          categoryItem.classList.add('category-item');
+          categoryItem.textContent = categoria.categoria;
+
+          categoryItem.addEventListener('click', function() {
+            document.getElementById('categoria_manual').value = categoria.categoria;
+          });
+
+          categoryList.appendChild(categoryItem);
+        });
+      } catch (error) {
+        console.error('Error cargando categorías:', error);
+      }
+    }
+
+    // Manejar el formulario de subida
+    document.getElementById('upload-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(event.target);
+      const successMessage = document.getElementById('success-message');
+      const errorMessage = document.getElementById('error-message');
+
+      // Obtener el enlace del archivo PDF
+      const archivoUrl = document.getElementById('archivo_url').value.trim();
+
+      if (!archivoUrl) {
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = 'Por favor, introduce un enlace válido al archivo PDF.';
+        successMessage.style.display = 'none';
+        return;
+      }
+
+      // Añadir el enlace al FormData
+      formData.append('archivo_url', archivoUrl);
+
+      try {
+        const response = await fetch('/subir-libro', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          successMessage.style.display = 'block';
+          successMessage.textContent = `Libro subido exitosamente! ID: ${result.libroId}`;
+          errorMessage.style.display = 'none';
+        } else {
+          throw new Error(result.error || 'Hubo un problema al subir el libro.');
+        }
+      } catch (error) {
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = `Error: ${error.message}`;
+        successMessage.style.display = 'none';
+      }
+    });
+
+    // Cargar categorías cuando la página se carga
+    window.onload = cargarCategorias;
+  </script>
+</body>
+</html>
