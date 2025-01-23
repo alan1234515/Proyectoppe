@@ -290,54 +290,60 @@ app.get("/descargar/:id", async (req, res) => {
     res.status(500).send("Error al descargar el libro.");
   }
 });
-// Middleware para identificar y registrar las visitas
-app.use(async (req, res, next) => {
-  const ip = req.ip; // Captura la IP del cliente
-  try {
-    // Verifica si la IP ya ha sido registrada
-    const result = await pool.query("SELECT ip FROM visitas WHERE ip = $1", [ip]);
-    if (result.rows.length === 0) {
-      // Nueva IP: inserta en la tabla y actualiza el contador
-      await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
-      await pool.query("UPDATE contador_visitas SET total_visitas = total_visitas + 1");
-    }
-  } catch (error) {
-    console.error("Error registrando visita:", error);
-  }
-  next();
-});
 
-// Ruta para obtener el contador de visitas
-app.get("/contador", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT total_visitas FROM contador_visitas");
-    res.json({ totalVisitas: result.rows[0].total_visitas });
-  } catch (error) {
-    console.error("Error obteniendo contador de visitas:", error);
-    res.status(500).send("Error obteniendo el contador de visitas.");
-  }
-});
+import cookieParser from "cookie-parser";
 
-// Ruta principal para index.html (actualiza para mostrar el contador dinámicamente)
+// Inicializa middleware de cookies
+app.use(cookieParser());
+
 app.get("/", async (req, res) => {
   try {
-    const result = await pool.query("SELECT total_visitas FROM contador_visitas");
-    const totalVisitas = result.rows[0].total_visitas;
+    const userIp = req.ip;
+    let userIdentifier = req.cookies.userIdentifier;
+
+    if (!userIdentifier) {
+      // Si el usuario no tiene cookie, generamos un identificador único
+      userIdentifier = `${userIp}-${Date.now()}`;
+      res.cookie("userIdentifier", userIdentifier, {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      }); // 30 días de duración
+    }
+
+    // Verificamos si este usuario ya está contado
+    const result = await pool.query(
+      "SELECT id FROM visitor_count WHERE user_identifier = $1",
+      [userIdentifier]
+    );
+
+    if (result.rows.length === 0) {
+      // Usuario no contado, lo registramos y sumamos 1 al contador
+      await pool.query(
+        "INSERT INTO visitor_count (user_identifier) VALUES ($1)",
+        [userIdentifier]
+      );
+    }
+
+    // Contamos los visitantes únicos
+    const totalVisitors = await pool.query(
+      "SELECT COUNT(*) AS count FROM visitor_count"
+    );
+
+    // Muestra la página junto con el contador de visitas únicas
     res.send(`
+      <!DOCTYPE html>
       <html>
-      <head><title>Contador de Visitas</title></head>
-      <body>
-        <h1>¡Bienvenido a la página!</h1>
-        <p>Total de visitas únicas: ${totalVisitas}</p>
-      </body>
+        <head><title>Contador de Visitas</title></head>
+        <body>
+          <h1>Bienvenido a la Página</h1>
+          <p>Visitantes únicos: ${totalVisitors.rows[0].count}</p>
+        </body>
       </html>
     `);
   } catch (error) {
-    console.error("Error mostrando index.html con contador:", error);
-    res.status(500).send("Error mostrando la página.");
+    console.error("Error en el contador:", error);
+    res.status(500).send("Ocurrió un error.");
   }
 });
-
 
 // Puerto de escucha
 const port = process.env.PORT || 3000;
