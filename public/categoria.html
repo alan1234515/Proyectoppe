@@ -7,121 +7,151 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #e0f7fa;
-      padding-bottom: 120px;
-    }
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #e0f7fa;
+  padding-bottom: 120px;
+}
 
-    footer {
-      background-color: #333;
-      color: white;
-      padding: 10px;
-      text-align: center;
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-    }
+footer {
+  background-color: #333;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
 
-    header {
-      background-color: #333;
-      color: white;
-      padding: 15px;
-      text-align: center;
-    }
+header {
+  background-color: #333;
+  color: white;
+  padding: 15px;
+  text-align: center;
+}
 
-    h1 {
-      margin-bottom: 0;
-    }
+h1 {
+  margin-bottom: 0;
+}
 
-    select {
-      margin: 20px;
-      padding: 10px;
-      font-size: 16px;
-    }
+select {
+  margin: 20px;
+  padding: 10px;
+  font-size: 16px;
+  width: auto;
+}
 
-    #filtro-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 0 20px;
-    }
+#filtro-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 20px;
+}
 
-    #libros-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      padding: 20px;
-    }
+#libros-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px;
+}
 
-    .libro {
-      background-color: white;
-      border-radius: 8px;
-      width: 220px;
-      padding: 15px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
+.libro {
+  background-color: white;
+  border-radius: 8px;
+  width: 220px;
+  padding: 15px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
-    .imagen-libro {
-      width: 100%;
-      height: 200px;
-      object-fit: contain;
-      border-radius: 8px;
-      background-color: #e0f7fa;
-    }
+.imagen-libro {
+  width: 100%;
+  height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+  background-color: #e0f7fa;
+}
 
-    .libro h3 {
-      color: #00796b;
-      margin: 10px 0;
-      font-size: 1.2em;
-    }
+.libro h3 {
+  color: #00796b;
+  margin: 10px 0;
+  font-size: 1.2em;
+}
 
-    .libro p {
-      color: #004d40;
-      margin: 5px 0;
-    }
+.libro p {
+  color: #004d40;
+  margin: 5px 0;
+}
 
-    .descargar-link {
-      display: inline-block;
-      margin-top: 15px;
-      padding: 10px;
-      background-color: #00796b;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      font-weight: bold;
-    }
+.descargar-link {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #00796b;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+}
 
-    .descargar-link:hover {
-      background-color: #004d40;
-    }
+.descargar-link:hover {
+  background-color: #004d40;
+}
 
-    .regresar-btn {
-      display: inline-block;
-      margin: 20px;
-      padding: 10px 20px;
-      background-color: #00796b;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      font-weight: bold;
-    }
+.regresar-btn {
+  display: inline-block;
+  margin: 20px;
+  padding: 10px 20px;
+  background-color: #00796b;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+}
 
-    .regresar-btn:hover {
-      background-color: #004d40;
-    }
+.regresar-btn:hover {
+  background-color: #004d40;
+}
 
-    .loading {
-      text-align: center;
-      font-size: 1.5em;
-      color: #00796b;
-      margin: 20px 0;
-    }
+.loading {
+  text-align: center;
+  font-size: 1.5em;
+  color: #00796b;
+  margin: 20px 0;
+}
+
+/* Media Queries */
+@media screen and (max-width: 768px) {
+  /* Cambiar la disposición de filtro-container a columna */
+  #filtro-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Asegurar que el número de libros se ajusta mejor en pantallas pequeñas */
+  .libro {
+    width: 100%; /* Tomar el 100% del ancho disponible */
+    max-width: 320px; /* Limitar el tamaño */
+    margin-bottom: 20px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  /* Ajuste de la imagen y texto de los libros */
+  .libro h3 {
+    font-size: 1em;
+  }
+
+  .descargar-link,
+  .regresar-btn {
+    font-size: 14px;
+    padding: 8px 15px;
+  }
+}  
   </style>
   <script>
     let page = 1;
