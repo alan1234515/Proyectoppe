@@ -6,7 +6,6 @@
     <title>Mal hábito lector</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/umd/uuid.min.js"></script>
-
      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         /* Asegurar el diseño receptivo en dispositivos móviles */
@@ -41,6 +40,24 @@
                 font-size: 1.1em;
                 padding: 12px;
             }
+            @media (max-width: 767px) {
+    .navbar-nav {
+        text-align: center;
+        width: 100%;
+    }
+    .nav-item {
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin-top: 10px;
+    }
+    .navbar-toggler {
+        background-color: #2e7d32;  /* Color del botón hamburguesa */
+    }
+    .nav-link {
+        color: white !important;
+    }
+}
         }
     </style>
 </head>
