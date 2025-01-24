@@ -314,7 +314,7 @@ app.get("/total-usuarios", async (req, res) => {
 
 // Endpoint para registrar la visita de un usuario
 // Endpoint para registrar la visita de un usuario
-app.get("/visitar", async (req, res) => {
+app.get("/", async (req, res) => {
   const ip = getIp(req);
   const visitCookie = req.cookies["visited"];
 
@@ -334,10 +334,10 @@ app.get("/visitar", async (req, res) => {
 
       // Establecemos una cookie para recordar que ya visitó la página (durante 24 horas)
       res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
-      res.send("Visita registrada.");
-    } else {
-      res.send("Ya has visitado recientemente.");
     }
+
+    // Aquí puedes renderizar la página principal o redirigir según sea necesario
+    res.send("Bienvenido a la página. Visita registrada.");
   } catch (error) {
     console.error("Error al registrar la visita:", error);
     res.status(500).send("Error al registrar la visita.");
