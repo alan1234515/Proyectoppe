@@ -291,11 +291,6 @@ app.get("/descargar/:id", async (req, res) => {
 });
 // Ruta principal
 // Middleware para obtener la IP del cliente
-const express = require("express");
-const uuid = require("uuid"); // Generar identificadores únicos
-const pool = require("./db"); // Conexión a la base de datos PostgreSQL
-
-// Middleware para obtener la IP del cliente
 const getIp = (req) => {
   const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
   return ip;
@@ -304,10 +299,8 @@ const getIp = (req) => {
 // Endpoint para contar visitas únicas
 app.get("/total-usuarios", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT COUNT(DISTINCT session_id) AS total FROM visitas"
-    );
-    res.json({ totalUsuarios: result.rows[0].total });
+    const result = await pool.query("SELECT COUNT(*) AS total FROM visitas");
+    res.json({ totalUsuarios: parseInt(result.rows[0].total, 10) });
   } catch (error) {
     console.error("Error al obtener el número de usuarios:", error);
     res.status(500).send("Error al obtener el número de usuarios.");
@@ -317,21 +310,14 @@ app.get("/total-usuarios", async (req, res) => {
 // Endpoint para registrar la visita de un usuario
 app.get("/visitar", async (req, res) => {
   const ip = getIp(req);
-  const sessionId = uuid.v4(); // Generamos un session_id único cada vez
 
   try {
-    // Comprobar si la combinación IP + session_id ya existe
-    const checkVisit = await pool.query(
-      "SELECT * FROM visitas WHERE ip = $1 AND session_id = $2",
-      [ip, sessionId]
-    );
+    // Comprobar si la IP ya está registrada
+    const checkIpResult = await pool.query("SELECT * FROM visitas WHERE ip = $1", [ip]);
 
-    if (checkVisit.rows.length === 0) {
-      // Si la combinación IP + session_id no existe, insertamos la visita
-      await pool.query("INSERT INTO visitas (ip, session_id) VALUES ($1, $2)", [
-        ip,
-        sessionId,
-      ]);
+    if (checkIpResult.rows.length === 0) {
+      // Si la IP no está registrada, la insertamos
+      await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
     }
 
     res.send("Visita registrada");
@@ -339,12 +325,6 @@ app.get("/visitar", async (req, res) => {
     console.error("Error al registrar la visita:", error);
     res.status(500).send("Error al registrar la visita.");
   }
-});
-
-// Configurar el puerto y el servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
 
 // Puerto de escucha

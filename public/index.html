@@ -135,52 +135,33 @@
         </div>
     </footer>
      <script>
-  // Función para obtener el sessionId almacenado en el localStorage o generar uno nuevo
-  function obtenerSessionId() {
-    let sessionId = localStorage.getItem("session_id");
-
-    // Si no existe un sessionId en localStorage, generamos uno nuevo y lo almacenamos
-    if (!sessionId) {
-      sessionId = uuidv4(); // Asumiendo que estás usando la librería UUID para generar un ID único
-      localStorage.setItem("session_id", sessionId);
+    // Función para cargar el total de usuarios
+    function obtenerTotalUsuarios() {
+      fetch('/total-usuarios')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('totalUsuarios').innerText = `Total de usuarios: ${data.totalUsuarios}`;
+        })
+        .catch(error => {
+          console.error('Error al obtener los usuarios:', error);
+          document.getElementById('totalUsuarios').innerText = 'Error al cargar el número de usuarios.';
+        });
     }
-    return sessionId;
-  }
 
-  // Función para cargar el total de usuarios
-  function obtenerTotalUsuarios() {
-    fetch('/total-usuarios')
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById('totalUsuarios').innerText = `Total de usuarios: ${data.totalUsuarios}`;
-      })
-      .catch(error => {
-        console.error('Error al obtener los usuarios:', error);
-        document.getElementById('totalUsuarios').innerText = 'Error al cargar el número de usuarios.';
-      });
-  }
+    // Registrar la visita del usuario
+    function registrarVisita() {
+      fetch('/visitar')  // Registramos la visita del usuario en el servidor
+        .then(() => {
+          obtenerTotalUsuarios();  // Actualizamos el contador de usuarios al registrar la visita
+        })
+        .catch(error => {
+          console.error('Error al registrar la visita:', error);
+        });
+    }
 
-  // Registrar la visita del usuario, usando el session_id
-  function registrarVisita() {
-    const sessionId = obtenerSessionId(); // Obtener el session_id desde el localStorage
-
-    fetch('/visitar', {
-      method: "GET",  // o cualquier otra que estés usando en el backend
-      headers: {
-        "session-id": sessionId  // Incluir el session_id en los headers
-      }
-    })
-    .then(() => {
-      obtenerTotalUsuarios(); // Actualizar el contador de usuarios al registrar la visita
-    })
-    .catch(error => {
-      console.error('Error al registrar la visita:', error);
-    });
-  }
-
-  // Registrar visita cuando se carga la página
-  window.onload = registrarVisita;
-</script>
+    // Registrar visita cuando se carga la página
+    window.onload = registrarVisita;
+  </script>
 
 </body>
 </html>
