@@ -4,10 +4,14 @@ import pg from "pg";
 import multer from "multer";
 import { fileURLToPath } from "url";
 import path from "path";
+import cookieParser from "cookie-parser";
+
 
 // Cargar las variables de entorno
 config();
 
+// Usar cookie-parser
+app.use(cookieParser());
 // Obtener el nombre del archivo actual y el directorio del archivo
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -296,6 +300,7 @@ const getIp = (req) => {
   return ip;
 };
 
+
 // Endpoint para contar visitas únicas
 app.get("/total-usuarios", async (req, res) => {
   try {
@@ -310,17 +315,28 @@ app.get("/total-usuarios", async (req, res) => {
 // Endpoint para registrar la visita de un usuario
 app.get("/visitar", async (req, res) => {
   const ip = getIp(req);
+  const visitCookie = req.cookies["visited"];
 
   try {
-    // Comprobar si la IP ya está registrada
-    const checkIpResult = await pool.query("SELECT * FROM visitas WHERE ip = $1", [ip]);
+    // Comprobar si ya ha pasado cierto tiempo desde la última visita
+    if (!visitCookie) {
+      // Comprobar si la IP ya está registrada
+      const checkIpResult = await pool.query(
+        "SELECT * FROM visitas WHERE ip = $1",
+        [ip]
+      );
 
-    if (checkIpResult.rows.length === 0) {
-      // Si la IP no está registrada, la insertamos
-      await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
+      if (checkIpResult.rows.length === 0) {
+        // Si la IP no está registrada, la insertamos
+        await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
+      }
+
+      // Establecemos una cookie para recordar que ya visitó la página (durante 24 horas)
+      res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
+      res.send("Visita registrada.");
+    } else {
+      res.send("Ya has visitado recientemente.");
     }
-
-    res.send("Visita registrada");
   } catch (error) {
     console.error("Error al registrar la visita:", error);
     res.status(500).send("Error al registrar la visita.");
