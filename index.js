@@ -291,35 +291,60 @@ app.get("/descargar/:id", async (req, res) => {
 });
 // Ruta principal
 // Middleware para obtener la IP del cliente
-// Función para generar un sessionID único
-const generarSessionID = () => uuid.v4();
+const express = require("express");
+const uuid = require("uuid"); // Generar identificadores únicos
+const pool = require("./db"); // Conexión a la base de datos PostgreSQL
+
+// Middleware para obtener la IP del cliente
+const getIp = (req) => {
+  const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  return ip;
+};
+
+// Endpoint para contar visitas únicas
+app.get("/total-usuarios", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT COUNT(DISTINCT session_id) AS total FROM visitas"
+    );
+    res.json({ totalUsuarios: result.rows[0].total });
+  } catch (error) {
+    console.error("Error al obtener el número de usuarios:", error);
+    res.status(500).send("Error al obtener el número de usuarios.");
+  }
+});
 
 // Endpoint para registrar la visita de un usuario
 app.get("/visitar", async (req, res) => {
-  const sessionID = req.headers["session-id"]; // Reemplaza este valor si decides gestionarlo como cookie o desde frontend
+  const ip = getIp(req);
+  const sessionId = uuid.v4(); // Generamos un session_id único cada vez
 
-  if (!sessionID) {
-    // Si no hay sessionID, generamos uno nuevo y lo mandamos de vuelta al frontend.
-    const newSessionID = generarSessionID();
-    res.set("session-id", newSessionID); // O almacénalo en la cookie o localStorage en el frontend
+  try {
+    // Comprobar si la combinación IP + session_id ya existe
+    const checkVisit = await pool.query(
+      "SELECT * FROM visitas WHERE ip = $1 AND session_id = $2",
+      [ip, sessionId]
+    );
 
-    // Registrar esta nueva "sesión" (IP + SessionID) en la base de datos
-    await pool.query("INSERT INTO visitas (ip, session_id) VALUES ($1, $2)", [req.ip, newSessionID]);
+    if (checkVisit.rows.length === 0) {
+      // Si la combinación IP + session_id no existe, insertamos la visita
+      await pool.query("INSERT INTO visitas (ip, session_id) VALUES ($1, $2)", [
+        ip,
+        sessionId,
+      ]);
+    }
+
+    res.send("Visita registrada");
+  } catch (error) {
+    console.error("Error al registrar la visita:", error);
+    res.status(500).send("Error al registrar la visita.");
   }
-
-  // Responder con una acción o mensaje
-  res.send("Visita registrada");
 });
 
-// Endpoint para mostrar el total de usuarios únicos
-app.get("/total-usuarios", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT COUNT(DISTINCT session_id) AS total FROM visitas");
-    res.json({ totalUsuarios: result.rows[0].total });
-  } catch (error) {
-    console.error("Error al obtener los usuarios:", error);
-    res.status(500).send("Error al obtener el número de usuarios.");
-  }
+// Configurar el puerto y el servidor
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
 
 // Puerto de escucha
