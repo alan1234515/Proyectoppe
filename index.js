@@ -11,7 +11,6 @@ import cookieParser from "cookie-parser";
 config();
 
 // Usar cookie-parser
-app.use(cookieParser());
 // Obtener el nombre del archivo actual y el directorio del archivo
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,6 +48,7 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Configurar carpeta pública para servir archivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
