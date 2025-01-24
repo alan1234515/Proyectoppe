@@ -142,54 +142,31 @@
     </footer>
      <script>
     // Función para cargar el total de usuarios
-    // Función para cargar el total de usuarios
-function obtenerTotalUsuarios() {
-  fetch('/total-usuarios')
-    .then(response => response.json())
-    .then(data => {
-      document.getElementById('totalUsuarios').innerText = `Total de usuarios: ${data.totalUsuarios}`;
-    })
-    .catch(error => {
-      console.error('Error al obtener los usuarios:', error);
-      document.getElementById('totalUsuarios').innerText = 'Error al cargar el número de usuarios.';
-    });
-}
+    function obtenerTotalUsuarios() {
+      fetch('/total-usuarios')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('totalUsuarios').innerText = `Total de usuarios: ${data.totalUsuarios}`;
+        })
+        .catch(error => {
+          console.error('Error al obtener los usuarios:', error);
+          document.getElementById('totalUsuarios').innerText = 'Error al cargar el número de usuarios.';
+        });
+    }
 
-// Registrar la visita del usuario solo si es un nuevo usuario
-function registrarVisita() {
-  // Verificamos si el usuario es nuevo usando una cookie (simple ejemplo)
-  if (!getCookie('visitante')) {
-    // Si no tiene la cookie 'visitante', es un nuevo usuario
-    fetch('/visitar')  // Registramos la visita del usuario en el servidor
-      .then(() => {
-        document.cookie = "visitante=true; path=/";  // Seteamos la cookie para el nuevo visitante
-        obtenerTotalUsuarios();  // Actualizamos el contador de usuarios al registrar la visita
-      })
-      .catch(error => {
-        console.error('Error al registrar la visita:', error);
-      });
-  }
-}
+    // Registrar la visita del usuario
+    function registrarVisita() {
+      fetch('/visitar')  // Registramos la visita del usuario en el servidor
+        .then(() => {
+          obtenerTotalUsuarios();  // Actualizamos el contador de usuarios al registrar la visita
+        })
+        .catch(error => {
+          console.error('Error al registrar la visita:', error);
+        });
+    }
 
-// Función para obtener el valor de una cookie por nombre
-function getCookie(nombre) {
-  const valor = document.cookie.match('(^|;)\\s*' + nombre + '\\s*=\\s*([^;]+)');
-  return valor ? valor.pop() : null;
-}
-
-// Función para actualizar los registros de visitas cada 4 segundos
-function iniciarHeartbeat() {
-  setInterval(() => {
-    registrarVisita();
-  }, 4000);  // Cada 4 segundos
-}
-
-// Registrar la visita cuando se carga la página
-window.onload = function() {
-  registrarVisita();  // Registro inicial
-  iniciarHeartbeat();  // Iniciamos el heartbeat cada 4 segundos
-};
-
+    // Registrar visita cuando se carga la página
+    window.onload = registrarVisita;
   </script>
 
 </body>
