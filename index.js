@@ -313,6 +313,7 @@ app.get("/total-usuarios", async (req, res) => {
 });
 
 // Endpoint para registrar la visita de un usuario
+// Endpoint para registrar la visita de un usuario
 app.get("/visitar", async (req, res) => {
   const ip = getIp(req);
   const visitCookie = req.cookies["visited"];
@@ -329,6 +330,9 @@ app.get("/visitar", async (req, res) => {
       if (checkIpResult.rows.length === 0) {
         // Si la IP no está registrada, la insertamos
         await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
+
+        // Incrementar el contador de visitas en total
+        await pool.query("UPDATE visitas SET total = total + 1 WHERE id = 1");
       }
 
       // Establecemos una cookie para recordar que ya visitó la página (durante 24 horas)
@@ -342,6 +346,7 @@ app.get("/visitar", async (req, res) => {
     res.status(500).send("Error al registrar la visita.");
   }
 });
+
 
 // Puerto de escucha
 const port = process.env.PORT || 3000;
