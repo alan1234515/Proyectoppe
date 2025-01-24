@@ -319,7 +319,7 @@ app.get("/visitar", async (req, res) => {
   const visitCookie = req.cookies["visited"];
 
   try {
-    // Comprobar si ya ha pasado cierto tiempo desde la última visita
+    // Solo registramos la visita si la cookie 'visited' no está presente
     if (!visitCookie) {
       // Comprobar si la IP ya está registrada
       const checkIpResult = await pool.query(
@@ -330,9 +330,6 @@ app.get("/visitar", async (req, res) => {
       if (checkIpResult.rows.length === 0) {
         // Si la IP no está registrada, la insertamos
         await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
-
-        // Incrementar el contador de visitas en total
-        await pool.query("UPDATE visitas SET total = total + 1 WHERE id = 1");
       }
 
       // Establecemos una cookie para recordar que ya visitó la página (durante 24 horas)
@@ -346,7 +343,6 @@ app.get("/visitar", async (req, res) => {
     res.status(500).send("Error al registrar la visita.");
   }
 });
-
 
 // Puerto de escucha
 const port = process.env.PORT || 3000;
