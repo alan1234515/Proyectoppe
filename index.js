@@ -43,32 +43,46 @@ console.log(path.join(__dirname, "uploads"));
 app.get("/", async (req, res) => {
   let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
-  // Verifica si hay varias IPs en la lista de x-forwarded-for y solo toma la primera
-  if (typeof ip === "string" && ip.includes(",")) {
-    ip = ip.split(",")[0]; // Tomar solo la primera IP
+  // Si x-forwarded-for contiene múltiples direcciones, tomar solo la primera
+  if (ip && ip.includes(",")) {
+    ip = ip.split(",")[0].trim();
+  }
+
+  // Filtrar IPs privadas típicas (192.168.x.x, 10.x.x.x, 172.16.x.x - 172.31.x.x)
+  const privateIpRegex =
+    /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+)/;
+
+  // Si la IP es privada, reemplazar por la IP pública
+  if (privateIpRegex.test(ip)) {
+    ip = req.socket.remoteAddress; // Obtener la IP pública real desde la conexión
   }
 
   const visitCookie = req.cookies["visited"];
 
   try {
     if (!visitCookie) {
+      // Verificar si la IP ya ha visitado
       const checkIpResult = await pool.query(
         "SELECT * FROM visitas WHERE ip = $1",
         [ip]
       );
 
+      // Si no se encuentra, se inserta la nueva visita
       if (checkIpResult.rows.length === 0) {
         await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
       }
 
+      // Establecer una cookie para evitar múltiples visitas del mismo usuario durante 24 horas
       res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
     }
 
+    // Consultar el total de visitas
     const result = await pool.query(
       "SELECT COUNT(*) AS total_visitas FROM visitas"
     );
     const totalVisitas = result.rows[0].total_visitas;
 
+    // Enviar la página de inicio
     res.sendFile(path.join(__dirname, "public", "index.html"));
   } catch (error) {
     console.error(
