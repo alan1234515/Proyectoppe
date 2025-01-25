@@ -6,10 +6,12 @@ import { fileURLToPath } from "url";
 import path from "path";
 import cookieParser from "cookie-parser";
 
+
 // Cargar las variables de entorno
 config();
 
 // Usar cookie-parser
+// Obtener el nombre del archivo actual y el directorio del archivo
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -20,7 +22,6 @@ if (!process.env.DATABASE_URL) {
   console.error("ERROR: DATABASE_URL no está definida en el archivo .env.");
   process.exit(1);
 }
-
 // Configuración de la conexión a la base de datos
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -76,10 +77,12 @@ app.get("/categorias/filtrar", async (req, res) => {
   try {
     const now = Date.now();
 
+    // Si el caché es válido, lo usamos
     if (categoriasCache && now - cacheTimestamp < CACHE_DURATION) {
       return res.json(categoriasCache);
     }
 
+    // Consulta optimizada usando DISTINCT sobre un resultado combinado.
     const result = await pool.query(`
       SELECT DISTINCT categoria FROM (
         SELECT categoria FROM libros
@@ -91,6 +94,7 @@ app.get("/categorias/filtrar", async (req, res) => {
     categoriasCache = result.rows;
     cacheTimestamp = now;
 
+    // Devolver el resultado y actualizar caché
     res.json(categoriasCache);
   } catch (error) {
     console.error("Error obteniendo categorías:", error);
@@ -107,6 +111,7 @@ app.get("/categorias/libros", async (req, res) => {
     let params;
 
     if (categoria) {
+      // Utiliza UNION ALL para evitar la sobrecarga de eliminar duplicados
       query = `
         (SELECT id, nombre, categoria, imagen, tipo_imagen, 'libros' AS origen FROM libros WHERE categoria = $1)
         UNION ALL
@@ -114,6 +119,7 @@ app.get("/categorias/libros", async (req, res) => {
       `;
       params = [categoria];
     } else {
+      // Obtener todos los libros, sin necesidad de filtrar por categoría
       query = `
         (SELECT id, nombre, categoria, imagen, tipo_imagen, 'libros' AS origen FROM libros)
         UNION ALL
@@ -124,13 +130,15 @@ app.get("/categorias/libros", async (req, res) => {
 
     const result = await pool.query(query, params);
 
+    // Posteriormente procesamos las imágenes solo si es necesario (puedes decidir si lo haces en el cliente)
     const libros = result.rows.map((libro) => ({
       ...libro,
       imagen: libro.imagen
         ? `data:${libro.tipo_imagen};base64,${libro.imagen.toString("base64")}`
-        : null,
+        : null, // Si no hay imagen, asignamos null
     }));
 
+    // Solo en casos que sea necesario, por ejemplo, en entornos donde se necesiten imágenes
     res.json(libros);
   } catch (error) {
     console.error("Error obteniendo libros:", error);
@@ -172,6 +180,7 @@ app.post("/subir-libro", upload, async (req, res) => {
     });
   } catch (error) {
     console.error("Error al intentar subir el libro:", error.message);
+    console.error("Detalles del error:", error);
     res.status(500).json({
       error: "Error subiendo el libro.",
       details: error.message || error,
@@ -192,6 +201,7 @@ app.post("/subir-libro-forma2", upload, async (req, res) => {
   }
 
   try {
+    // Eliminar la referencia a 'tipo_archivo' en la consulta
     const query = `INSERT INTO libros1 (nombre, categoria, imagen, tipo_imagen, archivo) 
                    VALUES ($1, $2, $3, $4, $5) RETURNING id`;
     const result = await pool.query(query, [
@@ -208,14 +218,15 @@ app.post("/subir-libro-forma2", upload, async (req, res) => {
     });
   } catch (error) {
     console.error("Error al intentar subir el libro:", error.message);
+    console.error("Detalles del error:", error);
     res.status(500).json({
       error: "Error subiendo el libro.",
       details: error.message || error,
     });
   }
 });
-
 // Ruta para descargar el archivo de un libro
+// Ruta para descargar libros desde libros1 (con enlace directo)
 app.get("/descargar/libros1/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -283,8 +294,8 @@ app.get("/descargar/:id", async (req, res) => {
 });
 // Ruta para obtener la IP desde la petición
 const getIp = (req) => {
-  const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-  return ip.replace(/^.*:/, ""); // Limpiamos el prefijo si estamos detrás de un proxy
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  return ip.replace(/^.*:/, ''); // Limpiamos el prefijo si estamos detrás de un proxy
 };
 
 // Ruta principal para registrar las visitas
@@ -306,32 +317,38 @@ app.get("/", async (req, res) => {
       }
 
       // Establecer la cookie para indicar que el visitante ya estuvo
-      res.cookie("visited", "true", { maxAge: 86400000 }); // 1 día
+      res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
     }
 
-    // Agregar tu lógica aquí como respuesta a la visita
-    res.status(200).json({
-      message: `Visita registrada para la IP: ${ip}`,
-    });
-  } catch (error) {
-    console.error("Error al registrar la visita:", error.message);
-    res.status(500).json({ error: "Error al registrar la visita." });
-  }
-});
-app.get("/total-visitas", async (req, res) => {
-  try {
+    // Obtener el total de visitas
     const result = await pool.query(
       "SELECT COUNT(*) AS total_visitas FROM visitas"
     );
     const totalVisitas = result.rows[0].total_visitas;
-    res.json({ total_visitas: totalVisitas });
+
+    // Enviar la página principal y el total de visitas al cliente
+    res.sendFile(path.join(__dirname, "public", "index.html"));
   } catch (error) {
-    console.error("Error obteniendo el total de visitas:", error);
-    res.status(500).json({ error: "Error obteniendo el total de visitas." });
+    console.error(
+      "Error al registrar la visita o consultar las visitas:",
+      error
+    );
+    res.status(500).send("Error al registrar la visita.");
   }
 });
-// Iniciar el servidor en el puerto especificado
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
+// Ruta para obtener el total de visitas
+app.get("/total-visitas", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT COUNT(*) AS total_visitas FROM visitas");
+    const totalVisitas = result.rows[0].total_visitas;
+    res.json({ total_visitas: totalVisitas });
+  } catch (error) {
+    console.error("Error al obtener el total de visitas:", error);
+    res.status(500).json({ error: "Error al obtener el total de visitas." });
+  }
+});
+// Puerto de escucha
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Servidor en puerto ${port}`);
 });
