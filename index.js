@@ -40,59 +40,61 @@ app.use(cookieParser());
 
 console.log(path.join(__dirname, "uploads"));
 // Ruta para mostrar el index y registrar visitas
-app.get("/", async (req, res) => {
+// Funcion para obtener la IP del cliente (tomando la IP pública real)
+function getClientIP(req) {
   let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-
-  // Si x-forwarded-for contiene múltiples direcciones, tomar solo la primera
   if (ip && ip.includes(",")) {
-    ip = ip.split(",")[0].trim();
+    ip = ip.split(",")[0].trim(); // Si hay más de una IP, toma la primera
   }
 
-  // Filtrar IPs privadas típicas (192.168.x.x, 10.x.x.x, 172.16.x.x - 172.31.x.x)
-  const privateIpRegex =
-    /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+)/;
-
-  // Si la IP es privada, reemplazar por la IP pública
+  // Filtrar IP privadas para asegurar que solo guardamos IP públicas
+  const privateIpRegex = /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+)/;
   if (privateIpRegex.test(ip)) {
-    ip = req.socket.remoteAddress; // Obtener la IP pública real desde la conexión
+    return null; // Retorna null para IPs privadas
   }
 
-  const visitCookie = req.cookies["visited"];
+  return ip; // Si es IP pública, devuelve la IP
+}
+
+app.get("/", async (req, res) => {
+  const ip = getClientIP(req);  // Obtener la IP pública real del dispositivo
+
+  if (!ip) {
+    return res.status(400).send("No se puede registrar la visita desde una IP privada.");
+  }
+
+  const visitCookie = req.cookies["visited"];  // Verifica si ya se visitó antes
 
   try {
     if (!visitCookie) {
-      // Verificar si la IP ya ha visitado
+      // Verificar si ya se registró esta IP en la base de datos
       const checkIpResult = await pool.query(
         "SELECT * FROM visitas WHERE ip = $1",
         [ip]
       );
 
-      // Si no se encuentra, se inserta la nueva visita
+      // Si no hay registros de esa IP, se crea un nuevo registro de visita
       if (checkIpResult.rows.length === 0) {
         await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
       }
 
-      // Establecer una cookie para evitar múltiples visitas del mismo usuario durante 24 horas
+      // Crear cookie para indicar que el usuario ya visitó
       res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
     }
 
-    // Consultar el total de visitas
+    // Contar el número total de visitas
     const result = await pool.query(
       "SELECT COUNT(*) AS total_visitas FROM visitas"
     );
     const totalVisitas = result.rows[0].total_visitas;
 
-    // Enviar la página de inicio
+    // Enviar archivo HTML
     res.sendFile(path.join(__dirname, "public", "index.html"));
   } catch (error) {
-    console.error(
-      "Error al registrar la visita o consultar las visitas:",
-      error
-    );
+    console.error("Error al registrar la visita o consultar las visitas:", error);
     res.status(500).send("Error al registrar la visita.");
   }
 });
-
 // Ruta para obtener el total de visitas
 app.get("/total-visitas", async (req, res) => {
   try {
