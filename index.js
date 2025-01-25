@@ -47,18 +47,18 @@ app.get("/", (req, res) => {
 });
 
 // Contar visitas en /index.html
-app.get("/index.html", async (req, res) => {
+app.get("/index.html", async (req, res, next) => {
   try {
-    // 1. Identificar al usuario por cookie
+    // Identificar al usuario por cookie
     let visitId = req.cookies["visitId"];
 
     if (!visitId) {
-      // 2. Si no hay cookie, generar un ID único y crear la cookie
+      // Si no hay cookie, generar un ID único y crear la cookie
       visitId = uuidv4();
       res.cookie("visitId", visitId, { maxAge: 86400000, httpOnly: true }); // 1 día
     }
 
-    // 3. Verificar si ya existe en la base de datos
+    // Verificar si ya existe el usuario en la base de datos
     const checkUserQuery = "SELECT 1 FROM visitas WHERE visitante_id = $1";
     const result = await pool.query(checkUserQuery, [visitId]);
 
@@ -70,24 +70,16 @@ app.get("/index.html", async (req, res) => {
       await pool.query(insertVisitQuery, [visitId, userIp]);
     }
 
-    // Contar el total de visitas
-    const totalQuery = "SELECT COUNT(*) AS total_visitas FROM visitas";
-    const totalResult = await pool.query(totalQuery);
-    const totalVisitas = totalResult.rows[0].total_visitas;
-
-    res.send(`
-      <html>
-        <head><title>Contador de Visitas</title></head>
-        <body>
-          <h1>Total de visitas: ${totalVisitas}</h1>
-        </body>
-      </html>
-    `);
+    next(); // Continuar al servir la página estática
   } catch (error) {
     console.error("Error en el registro de visitas:", error);
     res.status(500).send("Error interno del servidor.");
   }
 });
+
+// Servir el archivo estático index.html
+app.use(express.static(path.join(__dirname, "public")));
+
 // Ruta para obtener el total de visitas
 app.get("/total-visitas", async (req, res) => {
   try {
