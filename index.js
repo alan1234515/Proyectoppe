@@ -60,7 +60,7 @@ app.get("/", (req, res) => {
 });
 
 // Ruta principal para cargar el formulario de carga de libros
-app.get("/", (req, res) => {
+app.get("/forma1", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "forma1.html"));
 });
 
