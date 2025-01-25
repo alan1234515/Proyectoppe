@@ -223,6 +223,7 @@
     </header>
     <!-- Menú con subcategorías -->
      <!-- Menú con subcategorías -->
+<!-- Menú con subcategorías -->
 <nav class="menu">
     <!-- Ícono de menú en móvil -->
     <button class="menu-icon" id="menu-toggle"><i class="bi bi-list"></i></button>
@@ -322,32 +323,29 @@
             });
         }
         
-        // Hacemos una solicitud al servidor para obtener el total de visitas
-        fetch('/total-visitas')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('total-visitas').innerText = data.total_visitas;
-        })
-        .catch(error => {
-            console.error("Error obteniendo las visitas:", error);
-        });
-         // Muestra el menú móvil cuando se hace clic en el botón
+        // Muestra el menú móvil cuando se hace clic en el botón
     $('#menu-toggle').click(function () {
         $('#menu-mobile').toggle();
     });
 
-    // Simulando carga de visitas en ambas versiones (escritorio y móvil)
-    function cargarVisitas() {
-        // En lugar de un valor real, por ejemplo de un servidor, lo podemos simular
-        const visitas = 1234; // Simulamos las visitas
-        $('#total-visitas').text(visitas);  // Actualización para escritorio
-        $('#total-visitas-mobile').text(visitas); // Actualización para móvil
+    // Función para actualizar las visitas
+    function actualizarVisitas() {
+        fetch('/total-visitas') // Solicitud al servidor
+        .then(response => response.json()) 
+        .then(data => {
+            document.getElementById('total-visitas').innerText = data.total_visitas;
+            document.getElementById('total-visitas-mobile').innerText = data.total_visitas;
+        })
+        .catch(error => {
+            console.error("Error obteniendo las visitas:", error);
+        });
     }
 
-    // Llamada para cargar las visitas
-    $(document).ready(function() {
-        cargarVisitas();
-    });
+    // Llamada a la función cuando se carga la página
+    window.onload = function() {
+        actualizarVisitas(); // Actualiza las visitas
+    };
+         
     </script>
 </body>
 </html>
