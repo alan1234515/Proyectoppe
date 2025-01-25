@@ -3,6 +3,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import pkg from "pg";
+import { v4 as uuidv4 } from "uuid"; // Para generar identificadores únicos
 import { fileURLToPath } from "url";
 import multer from "multer"; // Para manejo de archivos
 import fs from "fs";
@@ -40,33 +41,46 @@ app.use(cookieParser());
 
 console.log(path.join(__dirname, "uploads"));
 // Ruta para mostrar el index y registrar visitas
+// Ruta principal: registro de visitas únicas
 app.get("/", async (req, res) => {
-  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress; // Obtener la IP
-  const visitCookie = req.cookies["visited"];
-
   try {
-    if (!visitCookie) {
-      const checkIpResult = await pool.query(
-        "SELECT * FROM visitas WHERE ip = $1",
-        [ip]
-      );
+    // 1. Identificar al usuario por cookie
+    let visitId = req.cookies["visitId"];
 
-      if (checkIpResult.rows.length === 0) {
-        await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
-      }
-
-      res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
+    if (!visitId) {
+      // 2. Si no hay cookie, generar un ID único y crear la cookie
+      visitId = uuidv4();
+      res.cookie("visitId", visitId, { maxAge: 86400000, httpOnly: true }); // 1 día
     }
 
-    const result = await pool.query(
-      "SELECT COUNT(*) AS total_visitas FROM visitas"
-    );
-    const totalVisitas = result.rows[0].total_visitas;
+    // 3. Verificar si ya existe en la base de datos
+    const checkUserQuery = "SELECT 1 FROM visitas WHERE visitante_id = $1";
+    const result = await pool.query(checkUserQuery, [visitId]);
 
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+    if (result.rows.length === 0) {
+      // Registrar la primera visita del usuario
+      const userIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const insertVisitQuery =
+        "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
+      await pool.query(insertVisitQuery, [visitId, userIp]);
+    }
+
+    // Contar el total de visitas
+    const totalQuery = "SELECT COUNT(*) AS total_visitas FROM visitas";
+    const totalResult = await pool.query(totalQuery);
+    const totalVisitas = totalResult.rows[0].total_visitas;
+
+    res.send(`
+      <html>
+        <head><title>Contador de Visitas</title></head>
+        <body>
+          <h1>Total de visitas: ${totalVisitas}</h1>
+        </body>
+      </html>
+    `);
   } catch (error) {
-    console.error("Error al registrar la visita o consultar las visitas:", error);
-    res.status(500).send("Error al registrar la visita.");
+    console.error("Error en el registro de visitas:", error);
+    res.status(500).send("Error interno del servidor.");
   }
 });
 
