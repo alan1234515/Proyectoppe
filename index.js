@@ -1,7 +1,5 @@
 import express from "express";
 import { config } from "dotenv";
-import cors from "cors";
-import { v4 as uuidv4 } from "uuid";
 import pg from "pg";
 import multer from "multer";
 import { fileURLToPath } from "url";
@@ -48,7 +46,6 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
@@ -56,7 +53,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 // Ruta principal para cargar el nuevo formulario de carga (index.html renombrado)
-app.get("/", (req, res) => {
+app.get("/index", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html")); // Aquí le dices que busque index.html dentro de 'public'
 });
 
@@ -295,64 +292,6 @@ app.get("/descargar/:id", async (req, res) => {
     res.status(500).send("Error al descargar el libro.");
   }
 });
-// Ruta principal
-app.get("/", async (req, res) => {
-  const ip = getIp(req);
-  const visitCookie = req.cookies["visited"];
-
-  try {
-    // Si la cookie no existe y si no está marcado como visitante en localStorage
-    if (!visitCookie) {
-      const checkIpResult = await pool.query(
-        "SELECT * FROM visitas WHERE ip = $1",
-        [ip]
-      );
-
-      if (checkIpResult.rows.length === 0) {
-        // Si la IP no está registrada, la insertamos
-        await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
-      }
-
-      // Establecemos la cookie
-      res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
-    }
-
-    // Obtener el total de visitas de la base de datos
-    const result = await pool.query(
-      "SELECT COUNT(*) AS total_visitas FROM visitas"
-    );
-    const totalVisitas = result.rows[0].total_visitas;
-
-    // Pasar el total de visitas al cliente y servir el index.html
-    res.sendFile(path.join(__dirname, "public", "index.html"));
-  } catch (error) {
-    console.error(
-      "Error al registrar la visita o consultar las visitas:",
-      error
-    );
-    res.status(500).send("Error al registrar la visita.");
-  }
-});
-
-// Ruta para obtener el total de visitas
-app.get("/total-visitas", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT COUNT(*) AS total_visitas FROM visitas"
-    );
-    const totalVisitas = result.rows[0].total_visitas;
-    res.json({ total_visitas: totalVisitas });
-  } catch (error) {
-    console.error("Error obteniendo el total de visitas:", error);
-    res.status(500).json({ error: "Error obteniendo el total de visitas." });
-  }
-});
-
-// Método para obtener la IP del visitante
-const getIp = (req) => {
-  const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-  return ip;
-};
 // Puerto de escucha
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
