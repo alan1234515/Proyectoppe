@@ -296,37 +296,55 @@ app.get("/descargar/:id", async (req, res) => {
   }
 });
 // Ruta principal
-// Ruta principal para servir el archivo index.html
 app.get("/", async (req, res) => {
-  const ip = getIp(req);  // Obtén la IP del usuario
-  const visitCookie = req.cookies["visited"];  // Comprueba si la cookie existe
-  
-  try {
-    // Si la cookie no existe (es la primera vez que visita en 24 horas), registrar visita
-    if (!visitCookie) {
-      // Comprobar si la IP ya está registrada
-      const checkIpResult = await pool.query("SELECT * FROM visitas WHERE ip = $1", [ip]);
+  const ip = getIp(req);
+  const visitCookie = req.cookies["visited"];
 
-      if (checkIpResult.rows.length === 0) {  // Si la IP no está registrada, la insertamos
+  try {
+    // Si la cookie no existe y si no está marcado como visitante en localStorage
+    if (!visitCookie) {
+      const checkIpResult = await pool.query(
+        "SELECT * FROM visitas WHERE ip = $1",
+        [ip]
+      );
+
+      if (checkIpResult.rows.length === 0) {
+        // Si la IP no está registrada, la insertamos
         await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
-        console.log("Nueva visita registrada con IP:", ip);
-      } else {
-        console.log("La IP ya ha visitado, no se registrará otra vez.");
       }
 
-      // Establecer la cookie de visita
+      // Establecemos la cookie
       res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
-
-      // Servir la página principal (index.html)
-      res.sendFile(path.join(__dirname, "public", "index.html"));
-    } else {
-      // Si ya se ha registrado una visita (por la cookie), simplemente servimos la página
-      console.log("Usuario ya visitó en las últimas 24 horas.");
-      res.sendFile(path.join(__dirname, "public", "index.html"));
     }
+
+    // Obtener el total de visitas de la base de datos
+    const result = await pool.query(
+      "SELECT COUNT(*) AS total_visitas FROM visitas"
+    );
+    const totalVisitas = result.rows[0].total_visitas;
+
+    // Pasar el total de visitas al cliente y servir el index.html
+    res.sendFile(path.join(__dirname, "public", "index.html"));
   } catch (error) {
-    console.error("Error al registrar la visita:", error);
+    console.error(
+      "Error al registrar la visita o consultar las visitas:",
+      error
+    );
     res.status(500).send("Error al registrar la visita.");
+  }
+});
+
+// Ruta para obtener el total de visitas
+app.get("/total-visitas", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT COUNT(*) AS total_visitas FROM visitas"
+    );
+    const totalVisitas = result.rows[0].total_visitas;
+    res.json({ total_visitas: totalVisitas });
+  } catch (error) {
+    console.error("Error obteniendo el total de visitas:", error);
+    res.status(500).json({ error: "Error obteniendo el total de visitas." });
   }
 });
 
