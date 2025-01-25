@@ -41,29 +41,20 @@ app.use(cookieParser());
 console.log(path.join(__dirname, "uploads"));
 // Ruta para mostrar el index y registrar visitas
 app.get("/", async (req, res) => {
-  // Obtener la IP correcta del dispositivo (considerando proxy)
-  const ip = req.headers["x-forwarded-for"]
-    ? req.headers["x-forwarded-for"].split(",")[0]
-    : req.socket.remoteAddress;
-
-  // Eliminar el prefijo "v4" de las IP privadas si aparece
-  const sanitizedIp = ip.replace(/^::ffff:/, ""); // Para IPv6 local.
-
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress; // Obtener la IP
   const visitCookie = req.cookies["visited"];
 
   try {
     if (!visitCookie) {
       const checkIpResult = await pool.query(
         "SELECT * FROM visitas WHERE ip = $1",
-        [sanitizedIp]
+        [ip]
       );
 
       if (checkIpResult.rows.length === 0) {
-        // Registrar la IP solo si no se ha registrado previamente
-        await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [sanitizedIp]);
+        await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
       }
 
-      // Establecer cookie de visita para que no se registre varias veces desde el mismo dispositivo
       res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
     }
 
@@ -74,10 +65,7 @@ app.get("/", async (req, res) => {
 
     res.sendFile(path.join(__dirname, "public", "index.html"));
   } catch (error) {
-    console.error(
-      "Error al registrar la visita o consultar las visitas:",
-      error
-    );
+    console.error("Error al registrar la visita o consultar las visitas:", error);
     res.status(500).send("Error al registrar la visita.");
   }
 });
