@@ -42,7 +42,12 @@ app.use(cookieParser());
 console.log(path.join(__dirname, "uploads"));
 // Ruta para mostrar el index y registrar visitas
 // Ruta principal: registro de visitas únicas
-app.get("/", async (req, res) => {
+app.get("/", (req, res) => {
+  res.redirect("/index.html");
+});
+
+// Contar visitas en /index.html
+app.get("/index.html", async (req, res) => {
   try {
     // 1. Identificar al usuario por cookie
     let visitId = req.cookies["visitId"];
@@ -83,7 +88,6 @@ app.get("/", async (req, res) => {
     res.status(500).send("Error interno del servidor.");
   }
 });
-
 // Ruta para obtener el total de visitas
 app.get("/total-visitas", async (req, res) => {
   try {
