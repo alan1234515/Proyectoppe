@@ -61,8 +61,10 @@
             </div>
         </div>
     </header>
-    <p>Contador de visitas:</p>
-  <div id="totalUsuarios">Cargando...</div>
+    <p id="contador-visitas" style="text-align: center; font-size: 1.5em; color: #333;">
+    Cargando visitas...
+</p>
+
     <!-- Menú con subcategorías -->
     <nav class="menu" style="background-color: #333; padding: 10px; text-align: center; border-radius: 8px;">
         <ul style="list-style-type: none; margin: 0; padding: 0;">
@@ -141,33 +143,26 @@
         </div>
     </footer>
      <script>
-    // Función para cargar el total de usuarios
-    function obtenerTotalUsuarios() {
-      fetch('/total-usuarios')
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('totalUsuarios').innerText = `Total de usuarios: ${data.totalUsuarios}`;
-        })
-        .catch(error => {
-          console.error('Error al obtener los usuarios:', error);
-          document.getElementById('totalUsuarios').innerText = 'Error al cargar el número de usuarios.';
-        });
+    async function actualizarVisitas() {
+        try {
+            // Incrementar visitas en el servidor
+            const response = await fetch("http://localhost:3000/visitas", { method: "POST" });
+            const data = await response.json();
+
+            // Mostrar visitas en el frontend
+            const visitas = document.getElementById("contador-visitas");
+            visitas.textContent = `Número de visitas: ${data.visitas}`;
+        } catch (error) {
+            console.error("Error al actualizar visitas:", error);
+        }
     }
 
-    // Registrar la visita del usuario
-    function registrarVisita() {
-      fetch('/visitar')  // Registramos la visita del usuario en el servidor
-        .then(() => {
-          obtenerTotalUsuarios();  // Actualizamos el contador de usuarios al registrar la visita
-        })
-        .catch(error => {
-          console.error('Error al registrar la visita:', error);
-        });
-    }
+    // Ejecuta la función al cargar la página
+    document.addEventListener("DOMContentLoaded", () => {
+        actualizarVisitas();
+    });
+</script>
 
-    // Registrar visita cuando se carga la página
-    window.onload = registrarVisita;
-  </script>
 
 </body>
 </html>

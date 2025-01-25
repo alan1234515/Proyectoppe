@@ -1,5 +1,6 @@
 import express from "express";
 import { config } from "dotenv";
+const cors = require("cors");
 import pg from "pg";
 import multer from "multer";
 import { fileURLToPath } from "url";
@@ -22,7 +23,6 @@ if (!process.env.DATABASE_URL) {
   console.error("ERROR: DATABASE_URL no está definida en el archivo .env.");
   process.exit(1);
 }
-
 // Configuración de la conexión a la base de datos
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -47,6 +47,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
@@ -299,50 +300,38 @@ app.get("/descargar/:id", async (req, res) => {
 app.use(cookieParser());
 
 // Ruta principal
-app.get("/", async (req, res) => {
+// Ruta para obtener el número de visitas
+app.get("/visitas", async (req, res) => {
     try {
-        // Generar una cookie única si el usuario no tiene una
-        if (!req.cookies.visitor_id) {
-            const visitorId = `${Date.now()}-${Math.random()}`;
-            res.cookie("visitor_id", visitorId, { maxAge: 24 * 60 * 60 * 1000 }); // Cookie válida por 1 día
-
-            // Verificar si la cookie ya existe en la base de datos
-            const result = await pool.query("SELECT 1 FROM usuarios WHERE cookie_id = $1", [visitorId]);
-
-            if (result.rowCount === 0) {
-                // Registrar el usuario en la tabla usuarios
-                await pool.query("INSERT INTO usuarios (cookie_id) VALUES ($1)", [visitorId]);
-
-                // Incrementar el contador
-                await pool.query("UPDATE visitas SET contador = contador + 1 WHERE id = 1");
-
-                console.log("Nuevo usuario detectado. Contador incrementado.");
-            }
-        } else {
-            console.log("Usuario recurrente. No se incrementa el contador.");
-        }
-
-        // Obtener el valor actual del contador
-        const { rows } = await pool.query("SELECT contador FROM visitas WHERE id = 1");
-        const contador = rows[0].contador;
-
-        // Enviar el archivo index.html
-        res.sendFile(path.join(__dirname, "public", "index.html"));
-        console.log(`Visitas únicas actuales: ${contador}`);
-    } catch (error) {
-        console.error("Error al procesar la solicitud:", error);
-        res.status(500).send("Error del servidor");
+        const result = await pool.query("SELECT contador FROM visitas LIMIT 1");
+        const contador = result.rows[0]?.contador || 0;
+        res.json({ visitas: contador });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error al obtener el contador.");
     }
 });
 
-// Ruta para obtener las visitas únicas (opcional)
-app.get("/visitas", async (req, res) => {
+// Ruta para incrementar el número de visitas
+app.post("/visitas", async (req, res) => {
     try {
-        const { rows } = await pool.query("SELECT contador FROM visitas WHERE id = 1");
-        res.json({ visitas: rows[0].contador });
-    } catch (error) {
-        console.error("Error al obtener el número de visitas:", error);
-        res.status(500).send("Error del servidor");
+        const result = await pool.query("SELECT contador FROM visitas LIMIT 1");
+        let contador = result.rows[0]?.contador || 0;
+
+        if (contador === 0) {
+            // Inserta la primera visita
+            await pool.query("INSERT INTO visitas (contador) VALUES (1)");
+            contador = 1;
+        } else {
+            // Incrementa el contador
+            contador++;
+            await pool.query("UPDATE visitas SET contador = $1", [contador]);
+        }
+
+        res.json({ visitas: contador });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error al actualizar el contador.");
     }
 });
 
