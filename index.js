@@ -41,7 +41,9 @@ app.use(cookieParser());
 console.log(path.join(__dirname, "uploads"));
 // Ruta para mostrar el index y registrar visitas
 app.get("/", async (req, res) => {
-  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress; // Obtener la IP
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress)
+    .split(",")[0]
+    .trim();
   const visitCookie = req.cookies["visited"];
 
   try {
