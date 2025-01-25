@@ -13,34 +13,68 @@
             .titulo-eslogan h1 {
                 font-size: 1.5em;
             }
-
             .titulo-eslogan p {
                 font-size: 1em;
                 margin: 10px 0;
             }
-
             .titulo-eslogan img {
                 width: 40px;
                 height: 40px;
             }
-
             header {
                 padding-bottom: 10px;
             }
-
             .libros-dinamicos {
                 padding: 10px;
             }
-
             .tarjeta {
                 width: 100%;
             }
-
             .menu a {
                 font-size: 1.1em;
                 padding: 12px;
             }
-            
+
+            /* Ocultar menú de escritorio y mostrar el menú hamburguesa en dispositivos pequeños */
+            .menu {
+                display: none;
+                flex-direction: column;
+                background-color: #333;
+                padding: 10px;
+                border-radius: 8px;
+                text-align: center;
+            }
+            .menu a {
+                font-size: 1.5em;
+                padding: 10px;
+                color: white;
+                text-decoration: none;
+            }
+            .menu a:hover {
+                background-color: #555;
+            }
+
+            .menu-button {
+                display: inline-block;
+                background-color: #2e7d32;
+                padding: 10px;
+                color: white;
+                font-size: 1.5em;
+                border: none;
+                cursor: pointer;
+            }
+        }
+
+        /* Estilo para el botón de menú en pantallas pequeñas */
+        .menu-button {
+            display: none;
+        }
+
+        /* Mostrar el botón de menú solo cuando se vea en pantallas pequeñas */
+        @media (max-width: 767px) {
+            .menu-button {
+                display: block;
+            }
         }
     </style>
 </head>
@@ -61,28 +95,29 @@
             </div>
         </div>
     </header>
-<!-- Menú con subcategorías -->
-<nav class="menu" style="background-color: #333; padding: 10px; text-align: center; border-radius: 8px;">
-    <ul style="list-style-type: none; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;">
-        <li style="display: inline-block; position: relative; margin-right: 20px;">
-            <a href="/categoria.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">CATEGORIAS</a>
-        </li>
-        <li style="display: inline-block; margin-right: 20px;">
-            <a href="Importancia de leer/Importancia_de_leer.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">IMPORTANCIA DE LEER</a>
-        </li>
-        <li style="display: inline-block; margin-right: 20px;">
-            <a href="Proposito/Proposito.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">PROPÓSITO</a>
-        </li>
-        <li style="display: inline-block; margin-right: 20px;">
-            <a href="FINALIDAD/FINALIDAD.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">FINALIDAD</a>
-        </li>
-        <!-- "Visitas" con el contador dentro de la lista -->
-        <li style="display: inline-block; margin-left: 20px; color: white; font-size: 1.2em;">
-            <a href="javascript:void(0)" style="color: white; font-size: 1.2em;">VISITAS: <span id="total-visitas" style="font-size: 1em;">Cargando...</span></a>
-        </li>
-    </ul>
-</nav>
+ <!-- Botón de menú hamburguesa para dispositivos pequeños -->
+    <button class="menu-button" onclick="toggleMenu()">☰ Menú</button>
 
+    <!-- Menú con subcategorías -->
+    <nav class="menu" id="menu">
+        <ul style="list-style-type: none; margin: 0; padding: 0;">
+            <li style="margin-bottom: 10px;">
+                <a href="/categoria.html">CATEGORIAS</a>
+            </li>
+            <li style="margin-bottom: 10px;">
+                <a href="Importancia de leer/Importancia_de_leer.html">IMPORTANCIA DE LEER</a>
+            </li>
+            <li style="margin-bottom: 10px;">
+                <a href="Proposito/Proposito.html">PROPÓSITO</a>
+            </li>
+            <li style="margin-bottom: 10px;">
+                <a href="FINALIDAD/FINALIDAD.html">FINALIDAD</a>
+            </li>
+            <li style="margin-bottom: 10px;">
+                <a href="javascript:void(0)">VISITAS: <span id="total-visitas">Cargando...</span></a>
+            </li>
+        </ul>
+    </nav>
 
     <!-- Sección de libros comunes -->
     <section class="libros-dinamicos" style="margin: 20px 0;">
@@ -168,6 +203,11 @@
         .catch(error => {
             console.error("Error obteniendo las visitas:", error);
         });
+        // Función para mostrar/ocultar el menú en pantallas pequeñas
+        function toggleMenu() {
+            var menu = document.getElementById('menu');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        }
     </script>
 </body>
 </html>
