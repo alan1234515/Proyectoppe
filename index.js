@@ -298,60 +298,50 @@ app.get("/descargar/:id", async (req, res) => {
 // Ruta principal
 // Middleware para obtener la IP del cliente
 // Middleware para manejar cookies
-app.use(cookieParser());
-
-// Ruta principal
-// Ruta principal
-app.get("/", async (req, res) => {
+// Ruta para incrementar el contador de visitas únicas
+app.get('/', async (req, res) => {
   try {
-    const userCookie = req.cookies.visitor_id;
+    // Verificar si ya existe una cookie llamada 'visited'
+    if (!req.cookies.visited) {
+      // Si no existe, asignar una nueva cookie y registrar la visita en la base de datos
 
-    // Si el usuario ya tiene una cookie registrada, no contar visita
-    if (userCookie) {
-      const existingUser = await pool.query("SELECT * FROM usuarios WHERE cookie_id = $1", [userCookie]);
-      if (existingUser.rows.length > 0) {
-        return res.send("Bienvenido de nuevo. Esta visita ya fue contada.");
+      // Establecer la cookie en el navegador del usuario por 1 año
+      res.cookie('visited', true, { maxAge: 365 * 24 * 60 * 60 * 1000 }); // 1 año
+
+      // Insertar la visita en la base de datos si no se ha contado esta IP anteriormente
+      const ipAddress = req.ip;  // Obtener la IP del visitante
+      const existingVisit = await pool.query('SELECT * FROM visitas WHERE ip = $1', [ipAddress]);
+
+      if (existingVisit.rowCount === 0) {
+        // Registrar la visita con una nueva IP
+        await pool.query('INSERT INTO visitas (ip) VALUES ($1)', [ipAddress]);
+
+        // Incrementar el contador de visitas en la tabla global
+        await pool.query('UPDATE contador_visitas SET visitas = visitas + 1 WHERE id = 1');
       }
     }
 
-    // Si no hay cookie, crear una nueva, registrar al usuario y sumar la visita
-    const newCookieId = uuidv4();
-    res.cookie("visitor_id", newCookieId, { maxAge: 30 * 24 * 60 * 60 * 1000 }); // Cookie válida por 30 días
-
-    // Guardar cookie en la tabla de usuarios
-    await pool.query("INSERT INTO usuarios (cookie_id) VALUES ($1)", [newCookieId]);
-
-    // Incrementar contador de la ruta principal
-    await pool.query(`
-      INSERT INTO visitas (ruta, contador)
-      VALUES ('/', 1)
-      ON CONFLICT (ruta)
-      DO UPDATE SET contador = visitas.contador + 1
-    `);
-
-    const result = await pool.query("SELECT contador FROM visitas WHERE ruta = '/'");
-    const contador = result.rows[0].contador;
-
-    res.send(`Bienvenido. La ruta principal ha recibido ${contador} visitas únicas.`);
+    // Redirigimos o mostramos la página principal (index.html)
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
   } catch (error) {
-    console.error("Error procesando la solicitud:", error);
-    res.status(500).send("Hubo un error procesando la solicitud.");
+    console.error('Error al registrar la visita:', error);
+    res.status(500).send('Error del servidor');
   }
 });
 
-// Ruta para verificar el número total de visitas únicas
-app.get("/visitas", async (req, res) => {
+// Ruta para obtener el número de visitas únicas
+app.get('/visitas', async (req, res) => {
   try {
-    const result = await pool.query("SELECT contador FROM visitas WHERE ruta = '/'");
-    const visitas = result.rows[0]?.contador || 0;
-
-    res.json({ visitasUnicas: visitas });
+    const result = await pool.query('SELECT visitas FROM contador_visitas WHERE id = 1');
+    res.json({ visitasUnicas: result.rows[0].visitas });
   } catch (error) {
-    console.error("Error obteniendo las visitas únicas:", error);
-    res.status(500).send("Error obteniendo las visitas únicas.");
+    console.error('Error al obtener las visitas:', error);
+    res.status(500).send('Error del servidor');
   }
 });
 
+
+// Ruta principal
 // Puerto de escucha
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
