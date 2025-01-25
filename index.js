@@ -295,53 +295,55 @@ app.get("/descargar/:id", async (req, res) => {
 });
 // Ruta principal
 // Middleware para obtener la IP del cliente
-const getIp = (req) => {
-  const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-  return ip;
-};
+// Middleware para manejar cookies
+app.use(cookieParser());
 
+// Ruta principal
+app.get("/", async (req, res) => {
+    try {
+        // Generar una cookie única si el usuario no tiene una
+        if (!req.cookies.visitor_id) {
+            const visitorId = `${Date.now()}-${Math.random()}`;
+            res.cookie("visitor_id", visitorId, { maxAge: 24 * 60 * 60 * 1000 }); // Cookie válida por 1 día
 
-// Endpoint para contar visitas únicas
-app.get("/total-usuarios", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT COUNT(*) AS total FROM visitas");
-    res.json({ totalUsuarios: parseInt(result.rows[0].total, 10) });
-  } catch (error) {
-    console.error("Error al obtener el número de usuarios:", error);
-    res.status(500).send("Error al obtener el número de usuarios.");
-  }
+            // Verificar si la cookie ya existe en la base de datos
+            const result = await pool.query("SELECT 1 FROM usuarios WHERE cookie_id = $1", [visitorId]);
+
+            if (result.rowCount === 0) {
+                // Registrar el usuario en la tabla usuarios
+                await pool.query("INSERT INTO usuarios (cookie_id) VALUES ($1)", [visitorId]);
+
+                // Incrementar el contador
+                await pool.query("UPDATE visitas SET contador = contador + 1 WHERE id = 1");
+
+                console.log("Nuevo usuario detectado. Contador incrementado.");
+            }
+        } else {
+            console.log("Usuario recurrente. No se incrementa el contador.");
+        }
+
+        // Obtener el valor actual del contador
+        const { rows } = await pool.query("SELECT contador FROM visitas WHERE id = 1");
+        const contador = rows[0].contador;
+
+        // Enviar el archivo index.html
+        res.sendFile(path.join(__dirname, "public", "index.html"));
+        console.log(`Visitas únicas actuales: ${contador}`);
+    } catch (error) {
+        console.error("Error al procesar la solicitud:", error);
+        res.status(500).send("Error del servidor");
+    }
 });
 
-// Endpoint para registrar la visita de un usuario
-// Endpoint para registrar la visita de un usuario
-app.get("/", async (req, res) => {
-  const ip = getIp(req);
-  const visitCookie = req.cookies["visited"];
-
-  try {
-    // Solo registramos la visita si la cookie 'visited' no está presente
-    if (!visitCookie) {
-      // Comprobar si la IP ya está registrada
-      const checkIpResult = await pool.query(
-        "SELECT * FROM visitas WHERE ip = $1",
-        [ip]
-      );
-
-      if (checkIpResult.rows.length === 0) {
-        // Si la IP no está registrada, la insertamos
-        await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
-      }
-
-      // Establecemos una cookie para recordar que ya visitó la página (durante 24 horas)
-      res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
+// Ruta para obtener las visitas únicas (opcional)
+app.get("/visitas", async (req, res) => {
+    try {
+        const { rows } = await pool.query("SELECT contador FROM visitas WHERE id = 1");
+        res.json({ visitas: rows[0].contador });
+    } catch (error) {
+        console.error("Error al obtener el número de visitas:", error);
+        res.status(500).send("Error del servidor");
     }
-
-    // Aquí puedes renderizar la página principal o redirigir según sea necesario
-    res.send("Bienvenido a la página. Visita registrada.");
-  } catch (error) {
-    console.error("Error al registrar la visita:", error);
-    res.status(500).send("Error al registrar la visita.");
-  }
 });
 
 // Puerto de escucha
