@@ -242,7 +242,7 @@
         <a href="Importancia de leer/Importancia_de_leer.html">IMPORTANCIA DE LEER</a>
         <a href="Proposito/Proposito.html">PROPÓSITO</a>
         <a href="FINALIDAD/FINALIDAD.html">FINALIDAD</a>
-        <a href="javascript:void(0)">VISITAS: <span id="total-visitas">Cargando...</span></a>
+        <a href="javascript:void(0)">VISITAS: <span id="total-visitas-mobile">Cargando...</span></a>
     </div>
 </nav>
 
@@ -334,6 +334,19 @@
          // Muestra el menú móvil cuando se hace clic en el botón
     $('#menu-toggle').click(function () {
         $('#menu-mobile').toggle();
+    });
+
+    // Simulando carga de visitas en ambas versiones (escritorio y móvil)
+    function cargarVisitas() {
+        // En lugar de un valor real, por ejemplo de un servidor, lo podemos simular
+        const visitas = 1234; // Simulamos las visitas
+        $('#total-visitas').text(visitas);  // Actualización para escritorio
+        $('#total-visitas-mobile').text(visitas); // Actualización para móvil
+    }
+
+    // Llamada para cargar las visitas
+    $(document).ready(function() {
+        cargarVisitas();
     });
     </script>
 </body>
