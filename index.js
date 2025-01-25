@@ -41,9 +41,12 @@ app.use(cookieParser());
 console.log(path.join(__dirname, "uploads"));
 // Ruta para mostrar el index y registrar visitas
 app.get("/", async (req, res) => {
-  // Asegurarte de tomar solo la primera IP de x-forwarded-for
-  const forwardedIps = req.headers["x-forwarded-for"];
-  const ip = forwardedIps ? forwardedIps.split(',')[0] : req.socket.remoteAddress;
+  let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+  // Verifica si hay varias IPs en la lista de x-forwarded-for y solo toma la primera
+  if (typeof ip === "string" && ip.includes(",")) {
+    ip = ip.split(",")[0]; // Tomar solo la primera IP
+  }
 
   const visitCookie = req.cookies["visited"];
 
@@ -68,10 +71,14 @@ app.get("/", async (req, res) => {
 
     res.sendFile(path.join(__dirname, "public", "index.html"));
   } catch (error) {
-    console.error("Error al registrar la visita o consultar las visitas:", error);
+    console.error(
+      "Error al registrar la visita o consultar las visitas:",
+      error
+    );
     res.status(500).send("Error al registrar la visita.");
   }
 });
+
 // Ruta para obtener el total de visitas
 app.get("/total-visitas", async (req, res) => {
   try {
