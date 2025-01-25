@@ -339,7 +339,46 @@ app.get('/visitas', async (req, res) => {
     res.status(500).send('Error del servidor');
   }
 });
+// Ruta para registrar la visita de un usuario
+app.get("/visitar", async (req, res) => {
+  const ip = getIp(req);
+  const visitCookie = req.cookies["visited"]; // Verificar si ya tiene la cookie
 
+  try {
+    // Si no existe la cookie de visita
+    if (!visitCookie) {
+      // Comprobar si la IP ya está registrada en la base de datos
+      const checkIpResult = await pool.query("SELECT * FROM visitas WHERE ip = $1", [ip]);
+
+      if (checkIpResult.rows.length === 0) {
+        // Si no está registrada, insertar la visita en la base de datos
+        await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
+
+        // Enviar respuesta para confirmar el registro
+        res.send("Visita registrada.");
+      } else {
+        // Si la IP ya está registrada, ignoramos el registro
+        res.send("Ya has visitado recientemente.");
+      }
+
+      // Establecer la cookie para evitar registrar la misma IP nuevamente
+      res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
+
+    } else {
+      // Si la cookie ya existe, indicamos que ya ha visitado recientemente
+      res.send("Ya has visitado recientemente.");
+    }
+  } catch (error) {
+    console.error("Error al registrar la visita:", error);
+    res.status(500).send("Error al registrar la visita.");
+  }
+});
+
+// Método para obtener la IP del usuario
+const getIp = (req) => {
+  const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  return ip;
+};
 
 // Ruta principal
 // Puerto de escucha
