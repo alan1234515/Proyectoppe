@@ -296,77 +296,33 @@ app.get("/descargar/:id", async (req, res) => {
   }
 });
 // Ruta principal
-// Middleware para obtener la IP del cliente
-// Middleware para manejar cookies
-// Ruta para incrementar el contador de visitas únicas
-app.get('/', async (req, res) => {
+// Ruta principal para servir el archivo index.html
+app.get("/", async (req, res) => {
+  const ip = getIp(req);  // Obtén la IP del usuario
+  const visitCookie = req.cookies["visited"];  // Comprueba si la cookie existe
+  
   try {
-    // Verificar si ya existe una cookie llamada 'visited'
-    if (!req.cookies.visited) {
-      // Si no existe, asignar una nueva cookie y registrar la visita en la base de datos
-
-      // Establecer la cookie en el navegador del usuario por 1 año
-      res.cookie('visited', true, { maxAge: 365 * 24 * 60 * 60 * 1000 }); // 1 año
-
-      // Insertar la visita en la base de datos si no se ha contado esta IP anteriormente
-      const ipAddress = req.ip;  // Obtener la IP del visitante
-      const existingVisit = await pool.query('SELECT * FROM visitas WHERE ip = $1', [ipAddress]);
-
-      if (existingVisit.rowCount === 0) {
-        // Registrar la visita con una nueva IP
-        await pool.query('INSERT INTO visitas (ip) VALUES ($1)', [ipAddress]);
-
-        // Incrementar el contador de visitas en la tabla global
-        await pool.query('UPDATE contador_visitas SET visitas = visitas + 1 WHERE id = 1');
-      }
-    }
-
-    // Redirigimos o mostramos la página principal (index.html)
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  } catch (error) {
-    console.error('Error al registrar la visita:', error);
-    res.status(500).send('Error del servidor');
-  }
-});
-
-// Ruta para obtener el número de visitas únicas
-app.get('/visitas', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT visitas FROM contador_visitas WHERE id = 1');
-    res.json({ visitasUnicas: result.rows[0].visitas });
-  } catch (error) {
-    console.error('Error al obtener las visitas:', error);
-    res.status(500).send('Error del servidor');
-  }
-});
-// Ruta para registrar la visita de un usuario
-app.get("/visitar", async (req, res) => {
-  const ip = getIp(req);
-  const visitCookie = req.cookies["visited"]; // Verificar si ya tiene la cookie
-
-  try {
-    // Si no existe la cookie de visita
+    // Si la cookie no existe (es la primera vez que visita en 24 horas), registrar visita
     if (!visitCookie) {
-      // Comprobar si la IP ya está registrada en la base de datos
+      // Comprobar si la IP ya está registrada
       const checkIpResult = await pool.query("SELECT * FROM visitas WHERE ip = $1", [ip]);
 
-      if (checkIpResult.rows.length === 0) {
-        // Si no está registrada, insertar la visita en la base de datos
+      if (checkIpResult.rows.length === 0) {  // Si la IP no está registrada, la insertamos
         await pool.query("INSERT INTO visitas (ip) VALUES ($1)", [ip]);
-
-        // Enviar respuesta para confirmar el registro
-        res.send("Visita registrada.");
+        console.log("Nueva visita registrada con IP:", ip);
       } else {
-        // Si la IP ya está registrada, ignoramos el registro
-        res.send("Ya has visitado recientemente.");
+        console.log("La IP ya ha visitado, no se registrará otra vez.");
       }
 
-      // Establecer la cookie para evitar registrar la misma IP nuevamente
+      // Establecer la cookie de visita
       res.cookie("visited", "true", { maxAge: 86400000 }); // 24 horas
 
+      // Servir la página principal (index.html)
+      res.sendFile(path.join(__dirname, "public", "index.html"));
     } else {
-      // Si la cookie ya existe, indicamos que ya ha visitado recientemente
-      res.send("Ya has visitado recientemente.");
+      // Si ya se ha registrado una visita (por la cookie), simplemente servimos la página
+      console.log("Usuario ya visitó en las últimas 24 horas.");
+      res.sendFile(path.join(__dirname, "public", "index.html"));
     }
   } catch (error) {
     console.error("Error al registrar la visita:", error);
@@ -374,13 +330,11 @@ app.get("/visitar", async (req, res) => {
   }
 });
 
-// Método para obtener la IP del usuario
+// Método para obtener la IP del visitante
 const getIp = (req) => {
   const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
   return ip;
 };
-
-// Ruta principal
 // Puerto de escucha
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
