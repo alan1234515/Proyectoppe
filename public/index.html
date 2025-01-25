@@ -41,11 +41,12 @@
 
         /* Menú */
         nav .menu {
-            background-color: #333;
+            background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro con transparencia */
             padding: 10px;
             text-align: center;
             border-radius: 8px;
             position: relative;
+            backdrop-filter: blur(5px); /* Aplicar un efecto de desenfoque */
         }
 
         .menu ul {
@@ -188,15 +189,19 @@
                 margin-right: 20px;
             }
 
-            /* Fondo del menú */
+            /* Fondo del menú con desenfoque */
             nav {
                 background-image: url('Imagenes/fondo-menu.jpg');
                 background-size: cover;
                 background-position: center;
                 background-repeat: no-repeat;
             }
+
+            .menu {
+                background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro con transparencia */
+                backdrop-filter: blur(5px); /* Efecto de desenfoque */
+            }
         }
-    </style>
     </style>
 </head>
 <body style="background-color:#c9eef6; padding: 20px; margin: 0; font-family: Arial, sans-serif;">
@@ -217,6 +222,7 @@
         </div>
     </header>
     <!-- Menú con subcategorías -->
+     <!-- Menú con subcategorías -->
 <nav class="menu">
     <!-- Ícono de menú en móvil -->
     <button class="menu-icon" id="menu-toggle"><i class="bi bi-list"></i></button>
@@ -239,7 +245,6 @@
         <a href="javascript:void(0)">VISITAS: <span id="total-visitas">Cargando...</span></a>
     </div>
 </nav>
-
 
 
     <!-- Sección de libros comunes -->
@@ -326,7 +331,7 @@
         .catch(error => {
             console.error("Error obteniendo las visitas:", error);
         });
-        // Muestra el menú móvil cuando se hace clic en el botón
+         // Muestra el menú móvil cuando se hace clic en el botón
     $('#menu-toggle').click(function () {
         $('#menu-mobile').toggle();
     });
