@@ -1,6 +1,7 @@
 import express from "express";
 import { config } from "dotenv";
 import cors from "cors";
+import { v4 as uuidv4 } from "uuid";
 import pg from "pg";
 import multer from "multer";
 import { fileURLToPath } from "url";
@@ -300,39 +301,55 @@ app.get("/descargar/:id", async (req, res) => {
 app.use(cookieParser());
 
 // Ruta principal
-// Ruta para obtener el número de visitas
-app.get("/visitas", async (req, res) => {
-    try {
-        const result = await pool.query("SELECT contador FROM visitas LIMIT 1");
-        const contador = result.rows[0]?.contador || 0;
-        res.json({ visitas: contador });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Error al obtener el contador.");
+// Ruta principal
+app.get("/", async (req, res) => {
+  try {
+    const userCookie = req.cookies.visitor_id;
+
+    // Si el usuario ya tiene una cookie registrada, no contar visita
+    if (userCookie) {
+      const existingUser = await pool.query("SELECT * FROM usuarios WHERE cookie_id = $1", [userCookie]);
+      if (existingUser.rows.length > 0) {
+        return res.send("Bienvenido de nuevo. Esta visita ya fue contada.");
+      }
     }
+
+    // Si no hay cookie, crear una nueva, registrar al usuario y sumar la visita
+    const newCookieId = uuidv4();
+    res.cookie("visitor_id", newCookieId, { maxAge: 30 * 24 * 60 * 60 * 1000 }); // Cookie válida por 30 días
+
+    // Guardar cookie en la tabla de usuarios
+    await pool.query("INSERT INTO usuarios (cookie_id) VALUES ($1)", [newCookieId]);
+
+    // Incrementar contador de la ruta principal
+    await pool.query(`
+      INSERT INTO visitas (ruta, contador)
+      VALUES ('/', 1)
+      ON CONFLICT (ruta)
+      DO UPDATE SET contador = visitas.contador + 1
+    `);
+
+    const result = await pool.query("SELECT contador FROM visitas WHERE ruta = '/'");
+    const contador = result.rows[0].contador;
+
+    res.send(`Bienvenido. La ruta principal ha recibido ${contador} visitas únicas.`);
+  } catch (error) {
+    console.error("Error procesando la solicitud:", error);
+    res.status(500).send("Hubo un error procesando la solicitud.");
+  }
 });
 
-// Ruta para incrementar el número de visitas
-app.post("/visitas", async (req, res) => {
-    try {
-        const result = await pool.query("SELECT contador FROM visitas LIMIT 1");
-        let contador = result.rows[0]?.contador || 0;
+// Ruta para verificar el número total de visitas únicas
+app.get("/visitas", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT contador FROM visitas WHERE ruta = '/'");
+    const visitas = result.rows[0]?.contador || 0;
 
-        if (contador === 0) {
-            // Inserta la primera visita
-            await pool.query("INSERT INTO visitas (contador) VALUES (1)");
-            contador = 1;
-        } else {
-            // Incrementa el contador
-            contador++;
-            await pool.query("UPDATE visitas SET contador = $1", [contador]);
-        }
-
-        res.json({ visitas: contador });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Error al actualizar el contador.");
-    }
+    res.json({ visitasUnicas: visitas });
+  } catch (error) {
+    console.error("Error obteniendo las visitas únicas:", error);
+    res.status(500).send("Error obteniendo las visitas únicas.");
+  }
 });
 
 // Puerto de escucha
