@@ -43,9 +43,7 @@ console.log(path.join(__dirname, "uploads"));
 app.get("/", async (req, res) => {
   // Asegurarte de tomar solo la primera IP de x-forwarded-for
   const forwardedIps = req.headers["x-forwarded-for"];
-  const ip = forwardedIps
-    ? forwardedIps.split(",")[0]
-    : req.socket.remoteAddress;
+  const ip = forwardedIps ? forwardedIps.split(',')[0] : req.socket.remoteAddress;
 
   const visitCookie = req.cookies["visited"];
 
@@ -70,14 +68,10 @@ app.get("/", async (req, res) => {
 
     res.sendFile(path.join(__dirname, "public", "index.html"));
   } catch (error) {
-    console.error(
-      "Error al registrar la visita o consultar las visitas:",
-      error
-    );
+    console.error("Error al registrar la visita o consultar las visitas:", error);
     res.status(500).send("Error al registrar la visita.");
   }
 });
-
 // Ruta para obtener el total de visitas
 app.get("/total-visitas", async (req, res) => {
   try {
