@@ -7,73 +7,155 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/umd/uuid.min.js"></script>
      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        /* Asegurar el diseño receptivo en dispositivos móviles */
+     <style>
+        /* Estilos para todos los dispositivos */
+        body {
+            background-color: #c9eef6;
+            padding: 20px;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Header */
+        header {
+            background-color: #c9eef6;
+            text-align: center;
+            padding-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .titulo-eslogan h1 {
+            color: #2e7d32;
+            font-size: 2.5em;
+        }
+
+        .titulo-eslogan p {
+            font-style: italic;
+            font-size: 1.2em;
+            color: #555;
+            margin-right: 10px;
+        }
+
+        /* Menú de navegación */
+        nav .menu {
+            background-color: #333;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        .menu ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .menu a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+            padding: 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .menu a:hover {
+            background-color: #555;
+        }
+
+        /* Tarjetas de libros */
+        .tarjeta {
+            width: 200px;
+            text-align: center;
+            background-color: rgb(255, 255, 255);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tarjeta img {
+            width: 100%;
+            height: auto;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .tarjeta h3 {
+            margin: 10px 0;
+            font-size: 1.1em;
+            color: #555;
+        }
+
+        .tarjeta p {
+            font-size: 0.9em;
+            color: #777;
+            margin: 5px 0;
+        }
+
+        .tarjeta a {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            background-color: #2e7d32;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        /* Estilos específicos para pantallas pequeñas (máximo 767px) */
         @media (max-width: 767px) {
             .titulo-eslogan h1 {
                 font-size: 1.5em;
             }
+
             .titulo-eslogan p {
                 font-size: 1em;
                 margin: 10px 0;
             }
+
             .titulo-eslogan img {
                 width: 40px;
                 height: 40px;
             }
-            header {
-                padding-bottom: 10px;
+
+            .menu ul {
+                flex-direction: column;
+                padding: 0;
             }
-            .libros-dinamicos {
-                padding: 10px;
+
+            .menu li {
+                margin-right: 0;
+                margin-bottom: 10px;
             }
-            .tarjeta {
-                width: 100%;
-            }
+
             .menu a {
                 font-size: 1.1em;
                 padding: 12px;
             }
 
-            /* Ocultar menú de escritorio y mostrar el menú hamburguesa en dispositivos pequeños */
-            .menu {
-                display: none;
-                flex-direction: column;
-                background-color: #333;
+            .libros-dinamicos {
                 padding: 10px;
-                border-radius: 8px;
-                text-align: center;
-            }
-            .menu a {
-                font-size: 1.5em;
-                padding: 10px;
-                color: white;
-                text-decoration: none;
-            }
-            .menu a:hover {
-                background-color: #555;
             }
 
-            .menu-button {
-                display: inline-block;
-                background-color: #2e7d32;
-                padding: 10px;
-                color: white;
-                font-size: 1.5em;
-                border: none;
-                cursor: pointer;
+            .tarjeta {
+                width: 100%;
             }
         }
 
-        /* Estilo para el botón de menú en pantallas pequeñas */
-        .menu-button {
-            display: none;
-        }
+        /* Estilos para pantallas grandes (mayores a 767px) */
+        @media (min-width: 768px) {
+            .menu ul {
+                display: flex;
+            }
 
-        /* Mostrar el botón de menú solo cuando se vea en pantallas pequeñas */
-        @media (max-width: 767px) {
-            .menu-button {
-                display: block;
+            .menu li {
+                margin-right: 20px;
             }
         }
     </style>
@@ -95,29 +177,16 @@
             </div>
         </div>
     </header>
- <!-- Botón de menú hamburguesa para dispositivos pequeños -->
-    <button class="menu-button" onclick="toggleMenu()">☰ Menú</button>
+    <nav class="menu">
+    <ul>
+        <li><a href="/categoria.html">CATEGORIAS</a></li>
+        <li><a href="Importancia de leer/Importancia_de_leer.html">IMPORTANCIA DE LEER</a></li>
+        <li><a href="Proposito/Proposito.html">PROPÓSITO</a></li>
+        <li><a href="FINALIDAD/FINALIDAD.html">FINALIDAD</a></li>
+        <li><a href="javascript:void(0)">VISITAS: <span id="total-visitas">Cargando...</span></a></li>
+    </ul>
+</nav>
 
-    <!-- Menú con subcategorías -->
-    <nav class="menu" id="menu">
-        <ul style="list-style-type: none; margin: 0; padding: 0;">
-            <li style="margin-bottom: 10px;">
-                <a href="/categoria.html">CATEGORIAS</a>
-            </li>
-            <li style="margin-bottom: 10px;">
-                <a href="Importancia de leer/Importancia_de_leer.html">IMPORTANCIA DE LEER</a>
-            </li>
-            <li style="margin-bottom: 10px;">
-                <a href="Proposito/Proposito.html">PROPÓSITO</a>
-            </li>
-            <li style="margin-bottom: 10px;">
-                <a href="FINALIDAD/FINALIDAD.html">FINALIDAD</a>
-            </li>
-            <li style="margin-bottom: 10px;">
-                <a href="javascript:void(0)">VISITAS: <span id="total-visitas">Cargando...</span></a>
-            </li>
-        </ul>
-    </nav>
 
     <!-- Sección de libros comunes -->
     <section class="libros-dinamicos" style="margin: 20px 0;">
