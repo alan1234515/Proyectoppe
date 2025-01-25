@@ -6,53 +6,79 @@
     <title>Mal hábito lector</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/umd/uuid.min.js"></script>
-     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        /* Asegurar el diseño receptivo en dispositivos móviles */
+        /* Asegurando que el diseño sea adaptativo en dispositivos móviles */
         @media (max-width: 767px) {
-            .titulo-eslogan h1 {
-                font-size: 1.5em;
-            }
-
-            .titulo-eslogan p {
-                font-size: 1em;
-                margin: 10px 0;
-            }
-
-            .titulo-eslogan img {
-                width: 40px;
-                height: 40px;
-            }
-
-            header {
-                padding-bottom: 10px;
-            }
-
-            .libros-dinamicos {
-                padding: 10px;
-            }
-
-            .tarjeta {
+            /* Menu en dispositivos móviles */
+            .menu {
+                display: none;
                 width: 100%;
+                background-color: #333;
+                text-align: center;
+                position: absolute;
+                top: 50px;
+                left: 0;
+                right: 0;
+            }
+
+            .menu.open {
+                display: block;
             }
 
             .menu a {
-                font-size: 1.1em;
-                padding: 12px;
+                font-size: 1.2em;
+                padding: 15px;
+                display: block;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                transition: background-color 0.3s;
             }
-            
+
+            /* Estilo para el contenedor del icono de menú hamburguesa */
+            .hamburger {
+                display: block;
+                font-size: 1.8em;
+                color: white;
+                padding: 10px;
+                cursor: pointer;
+                margin-left: auto;
+                margin-right: 20px;
+            }
         }
-    </style>
+
+        /* Menú para pantallas más grandes */
+        @media (min-width: 768px) {
+            .menu {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background-color: #333;
+                padding: 10px;
+                border-radius: 8px;
+            }
+
+            .menu a {
+                font-size: 1.2em;
+                padding: 12px;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                transition: background-color 0.3s;
+            }
+        }
+        </style>
 </head>
 <body style="background-color:#c9eef6; padding: 20px; margin: 0; font-family: Arial, sans-serif;">
 
+   <body style="background-color:#c9eef6; padding: 20px; margin: 0; font-family: Arial, sans-serif;">
+
     <!-- Header con título, eslogan y logos -->
     <header style="background-color:#c9eef6; text-align: center; padding-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
-        <!-- Logo a la izquierda -->
         <div style="flex: 0 0 auto; margin-left: 20px;">
             <img src="Imagenes/Logo.png" alt="Logo Título" style="width: 160px; height: 160px;">
         </div>
-        <!-- Título y eslogan centrados -->
         <div class="titulo-eslogan" style="text-align: center; flex-grow: 1; padding: 10px;">
             <h1 style="color: #2e7d32; font-size: 2.5em;">UNIDAD EDUCATIVA FISCOMISIONAL <br> "MARÍA AUXILIADORA"</h1>
             <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
@@ -61,27 +87,27 @@
             </div>
         </div>
     </header>
-<!-- Menú con subcategorías -->
-<nav class="menu" style="background-color: #333; padding: 10px; text-align: center; border-radius: 8px;">
-    <ul style="list-style-type: none; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;">
-        <li style="display: inline-block; position: relative; margin-right: 20px;">
-            <a href="/categoria.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">CATEGORIAS</a>
-        </li>
-        <li style="display: inline-block; margin-right: 20px;">
-            <a href="Importancia de leer/Importancia_de_leer.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">IMPORTANCIA DE LEER</a>
-        </li>
-        <li style="display: inline-block; margin-right: 20px;">
-            <a href="Proposito/Proposito.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">PROPÓSITO</a>
-        </li>
-        <li style="display: inline-block; margin-right: 20px;">
-            <a href="FINALIDAD/FINALIDAD.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">FINALIDAD</a>
-        </li>
-        <!-- Texto "Visitas" y el contador agregado dentro del menú -->
-        <li style="display: inline-block; margin-left: 20px; color: white; font-size: 1.2em;">
-            VISITAS: <span id="total-visitas" style="font-size: 1em;">Cargando...</span>
-        </li>
-    </ul>
-</nav>
+
+    <!-- Menú con subcategorías -->
+    <nav class="menu">
+        <ul style="list-style-type: none; margin: 0; padding: 0;">
+            <li style="display: inline-block; position: relative; margin-right: 20px;">
+                <a href="/categoria.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">CATEGORIAS</a>
+            </li>
+            <li style="display: inline-block; margin-right: 20px;">
+                <a href="Importancia de leer/Importancia_de_leer.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">IMPORTANCIA DE LEER</a>
+            </li>
+            <li style="display: inline-block; margin-right: 20px;">
+                <a href="Proposito/Proposito.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">PROPÓSITO</a>
+            </li>
+            <li style="display: inline-block; margin-right: 20px;">
+                <a href="FINALIDAD/FINALIDAD.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px; border-radius: 4px; transition: background-color 0.3s;">FINALIDAD</a>
+            </li>
+            <li style="display: inline-block; margin-left: 20px; color: white; font-size: 1.2em;">
+                VISITAS: <span id="total-visitas" style="font-size: 1em;">Cargando...</span>
+            </li>
+        </ul>
+    </nav>
 
     <!-- Sección de libros comunes -->
     <section class="libros-dinamicos" style="margin: 20px 0;">
@@ -167,6 +193,10 @@
         .catch(error => {
             console.error("Error obteniendo las visitas:", error);
         });
+         function toggleMenu() {
+            const menu = document.querySelector('.menu');
+            menu.classList.toggle('open');
+        }
     </script>
 </body>
 </html>
