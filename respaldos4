@@ -7,23 +7,19 @@ import { fileURLToPath } from "url";
 import multer from "multer"; // Para manejo de archivos
 import fs from "fs";
 
-
-// Obtener la ruta del directorio actual
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Crear la carpeta de uploads si no existe
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
+
 // Desestructuración de Pool desde el módulo CommonJS de pg
 const { Pool } = pkg;
 
 // Configuración de variables de entorno
 dotenv.config();
 
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -146,38 +142,39 @@ app.get("/categorias", async (req, res) => {
 app.use(express.static(path.join(__dirname, "public")));
 
 // Ruta para obtener las categorías únicas (con cacheo)
-let categoriasCache = [];
+let categoriasCache = null;
 let cacheTimestamp = 0;
-const CACHE_DURATION = 60000; // Cache por 1 minuto
+const CACHE_DURATION = 60000; // Duración del cache en milisegundos (1 minuto)
 
 app.get("/categorias/filtrar", async (req, res) => {
-  const now = Date.now();
-
-  // Verificar si el cache aún es válido
-  if (categoriasCache.length > 0 && now - cacheTimestamp < CACHE_DURATION) {
-    return res.json(categoriasCache); // Retornamos el cache si no ha expirado
-  }
-
   try {
+    const now = Date.now();
+
+    // Verificar si el cache aún es válido
+    if (categoriasCache && now - cacheTimestamp < CACHE_DURATION) {
+      return res.json(categoriasCache); // Retornar el cache si no ha expirado
+    }
+
+    // Si el cache ha expirado, realizar la consulta a la base de datos
     const result = await pool.query(`
-      SELECT DISTINCT categoria 
-      FROM libros 
-      UNION ALL
-      SELECT DISTINCT categoria 
-      FROM libros1
+      SELECT DISTINCT categoria FROM (
+        SELECT categoria FROM libros
+        UNION ALL
+        SELECT categoria FROM libros1
+      ) AS categorias
     `);
 
-    // Almacenamos los resultados en el cache
+    // Guardar el resultado en el cache
     categoriasCache = result.rows;
-    cacheTimestamp = now;
+    cacheTimestamp = now; // Actualizamos el timestamp de cache
 
+    // Enviar las categorías como respuesta
     res.json(categoriasCache);
   } catch (error) {
     console.error("Error obteniendo categorías:", error);
     res.status(500).json({ error: "Error obteniendo categorías." });
   }
 });
-
 
 // Ruta para obtener los libros de una categoría específica o todos si no se selecciona categoría
 app.get("/categorias/libros", async (req, res) => {
@@ -205,7 +202,6 @@ app.get("/categorias/libros", async (req, res) => {
 
     const result = await pool.query(query, params);
 
-    // Aquí, si tus consultas son grandes, podrías agregar caché
     const libros = result.rows.map((libro) => ({
       ...libro,
       imagen: libro.imagen
@@ -279,63 +275,43 @@ app.get("/descargar/:id", async (req, res) => {
   }
 });
 // Ruta para subir libro con imagen y enlace (segundo tipo de forma)
-app.post("/subir-libro-forma2", upload.single("imagen"), async (req, res) => {
+app.post("/subir-libro-forma2", upload.single('imagen'), async (req, res) => {
   const { nombre, categoria, enlace } = req.body;
-  const archivo = req.file;
+  const imagen = req.file ? req.file.buffer : null;  // Cambié req.files por req.file para manejar sólo un archivo
+  const tipo_imagen = req.file ? req.file.mimetype : null;
 
   // Validación de campos requeridos
   if (!nombre || !categoria || !enlace) {
     return res.status(400).json({ error: "Faltan campos requeridos." });
   }
 
-  // Validación de tipo de imagen (ajusta según los tipos permitidos)
-  if (archivo && !["image/jpeg", "image/png"].includes(archivo.mimetype)) {
-    return res
-      .status(400)
-      .json({ error: "Solo se permiten imágenes JPEG y PNG." });
+  // Validación de tipo de imagen (puedes ajustarlo según tipos permitidos)
+  if (imagen && !['image/jpeg', 'image/png'].includes(tipo_imagen)) {
+    return res.status(400).json({ error: "Solo se permiten imágenes JPEG y PNG." });
   }
 
-  // Si el archivo está presente
-  if (archivo) {
-    const tipo_imagen = archivo.mimetype;
+  try {
+    // Inserción del libro en la base de datos
+    const query = `INSERT INTO libros1 (nombre, categoria, imagen, tipo_imagen, archivo) 
+                   VALUES ($1, $2, $3, $4, $5) RETURNING id`;
+    const result = await pool.query(query, [
+      nombre,
+      categoria,
+      imagen,
+      tipo_imagen,
+      enlace,
+    ]);
 
-    // Leer la imagen como un buffer (binarios)
-    const imagen_binaria = fs.readFileSync(archivo.path);
-
-    try {
-      // Inserta el libro en la base de datos con la imagen en formato binario
-      const query = `
-        INSERT INTO libros1 (nombre, categoria, imagen, tipo_imagen, archivo)
-        VALUES ($1, $2, $3, $4, $5) 
-        RETURNING id
-      `;
-
-      // Realizar la consulta de inserción con los datos binarios
-      const result = await pool.query(query, [
-        nombre,
-        categoria,
-        imagen_binaria, // Almacenar la imagen binaria en el campo "imagen"
-        tipo_imagen, // Guardar el tipo de la imagen (MIME)
-        enlace, // El enlace del libro
-      ]);
-
-      // Respuesta de éxito
-      res.status(201).json({
-        message: "Libro subido exitosamente con imagen binaria!",
-        libroId: result.rows[0].id,
-      });
-    } catch (error) {
-      console.error("Error al intentar subir el libro:", error.message);
-      res.status(500).json({
-        error: "Error subiendo el libro.",
-        details: error.message || error,
-      });
-    } finally {
-      // Eliminar el archivo físico después de leerlo para evitar dejar archivos temporales
-      fs.unlinkSync(archivo.path);
-    }
-  } else {
-    res.status(400).json({ error: "No se cargó ninguna imagen." });
+    res.status(201).json({
+      message: "Libro subido exitosamente con enlace y/o imagen!",
+      libroId: result.rows[0].id,
+    });
+  } catch (error) {
+    console.error("Error al intentar subir el libro:", error.message);
+    res.status(500).json({
+      error: "Error subiendo el libro.",
+      details: error.message || error,
+    });
   }
 });
 // Middleware para manejar errores
