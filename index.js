@@ -47,40 +47,44 @@ app.get("/", (req, res) => {
 });
 
 // Contar visitas en /index.html
+// Bloquear IPs de UptimeRobot y rango 10.204.x.x
+const blockedIps = [
+  "216.144.248.29",  // IP fija
+  "108.162.245.75",  // IP fija
+  "10.204."          // Rango 10.204.x.x
+];
+
 app.get("/index.html", async (req, res, next) => {
   try {
     // Obtenemos la IP del usuario
     const userIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    console.log(userIp);
 
-    // Bloqueamos la IP específica
-    if (userIp === "216.144.248.29") {
-      console.log(`Visita bloqueada para la IP restringida: ${userIp}`);
-      return res.status(200).send("Página no disponible para esta IP"); // Retorna sin continuar
+    // Verificamos si la IP está bloqueada
+    if (blockedIps.some(ip => userIp.startsWith(ip))) {
+      console.log(`Visita bloqueada para la IP de UptimeRobot: ${userIp}`);
+      return res.status(200).send("Página no disponible para esta IP");
     }
 
-    // Identificar al usuario por cookie
+    // Verificar si la IP del visitante ya ha sido registrada en cookies
     let visitId = req.cookies["visitId"];
-
     if (!visitId) {
-      // Si no hay cookie, generar un ID único y crear la cookie
-      visitId = uuidv4();
-      res.cookie("visitId", visitId, { maxAge: 86400000, httpOnly: true }); // 1 día
+      visitId = uuidv4(); // Genera un ID único
+      res.cookie("visitId", visitId, { maxAge: 86400000, httpOnly: true });
     }
 
-    // Verificar si ya existe el usuario en la base de datos
+    // Verificar si existe el usuario en la base de datos
     const checkUserQuery = "SELECT 1 FROM visitas WHERE visitante_id = $1";
     const result = await pool.query(checkUserQuery, [visitId]);
 
     if (result.rows.length === 0) {
-      // Registrar la primera visita del usuario
-      const insertVisitQuery =
-        "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
+      const insertVisitQuery = "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
       await pool.query(insertVisitQuery, [visitId, userIp]);
     }
 
-    next(); // Continuar al servir la página estática
+    next(); // Pasamos al siguiente middleware
   } catch (error) {
-    console.error("Error en el registro de visitas:", error);
+    console.error("Error al registrar la visita:", error);
     res.status(500).send("Error interno del servidor.");
   }
 });
