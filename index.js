@@ -49,6 +49,15 @@ app.get("/", (req, res) => {
 // Contar visitas en /index.html
 app.get("/index.html", async (req, res, next) => {
   try {
+    // Obtenemos la IP del usuario
+    const userIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+    // Bloqueamos la IP específica
+    if (userIp === "216.144.248.29") {
+      console.log(`Visita bloqueada para la IP restringida: ${userIp}`);
+      return next(); // Continuar al servir la página, pero sin registrar la visita
+    }
+
     // Identificar al usuario por cookie
     let visitId = req.cookies["visitId"];
 
@@ -64,7 +73,6 @@ app.get("/index.html", async (req, res, next) => {
 
     if (result.rows.length === 0) {
       // Registrar la primera visita del usuario
-      const userIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
       const insertVisitQuery =
         "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
       await pool.query(insertVisitQuery, [visitId, userIp]);
@@ -76,6 +84,7 @@ app.get("/index.html", async (req, res, next) => {
     res.status(500).send("Error interno del servidor.");
   }
 });
+
 
 // Servir el archivo estático index.html
 app.use(express.static(path.join(__dirname, "public")));
@@ -92,11 +101,6 @@ app.get("/total-visitas", async (req, res) => {
     console.error("Error obteniendo el total de visitas:", error);
     res.status(500).json({ error: "Error obteniendo el total de visitas." });
   }
-});
-
-// Ruta para cargar el formulario de carga de libros
-app.get("/forma1", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "forma1.html"));
 });
 
 // Ruta para mostrar el archivo categoria.html
