@@ -45,7 +45,6 @@ console.log(path.join(__dirname, "uploads"));
 app.get("/", (req, res) => {
   res.redirect("/index.html");
 });
-
 // Contar visitas en /index.html
 // Bloquear IPs de UptimeRobot y rango 10.204.x.x solo para registro
 const blockedIps = [
@@ -58,32 +57,33 @@ app.get("/index.html", async (req, res, next) => {
   try {
     // Obtenemos la IP del usuario
     const userIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-    console.log(`IP del usuario: ${userIp}`);
 
     // Verificar si la IP está bloqueada para el registro de visitas
     const isBlocked = blockedIps.some(ip => userIp.startsWith(ip));
     if (isBlocked) {
-      console.log(`Visita ignorada para la IP bloqueada: ${userIp}`);
-      return next(); // Permitimos el acceso, pero no registramos
+      // Mensaje para IPs bloqueadas (sin registrar visita)
+      console.log(`Visita ignorada para IP bloqueada: ${userIp}`);
+      return next(); // Permitir acceso pero sin registrar
     }
 
     // Verificar si el visitante ya tiene una cookie
     let visitId = req.cookies["visitId"];
     if (!visitId) {
-      // Si no tiene cookie, generar una nueva e insertarla en la base de datos
-      visitId = uuidv4(); // Generar un ID único
+      // Generar una nueva cookie
+      visitId = uuidv4();
       res.cookie("visitId", visitId, { maxAge: 86400000, httpOnly: true });
 
       // Registrar la visita en la base de datos
       const insertVisitQuery = "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
       await pool.query(insertVisitQuery, [visitId, userIp]);
+
+      // Mensaje único para nuevas visitas
       console.log("Nueva visita registrada:", visitId);
-    } else {
-      console.log("La visita ya tiene cookie. No se registra nuevamente.");
     }
 
-    next(); // Pasamos al siguiente middleware
+    next(); // Continuar con otros middlewares
   } catch (error) {
+    // Imprimir solo errores
     console.error("Error al registrar la visita:", error);
     res.status(500).send("Error interno del servidor.");
   }
