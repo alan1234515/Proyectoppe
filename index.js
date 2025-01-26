@@ -47,7 +47,7 @@ app.get("/", (req, res) => {
 });
 
 // Contar visitas en /index.html
-// Bloquear IPs de UptimeRobot y rango 10.204.x.x solo para registro, no para acceso
+// Bloquear IPs de UptimeRobot y rango 10.204.x.x solo para registro
 const blockedIps = [
   "216.144.248.29",  // IP fija
   "108.162.245.75",  // IP fija
@@ -58,38 +58,36 @@ app.get("/index.html", async (req, res, next) => {
   try {
     // Obtenemos la IP del usuario
     const userIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-    console.log(userIp);
+    console.log(`IP del usuario: ${userIp}`);
 
-    // Verificar si la IP del visitante ya ha sido registrada en cookies
+    // Verificar si la IP está bloqueada para el registro de visitas
+    const isBlocked = blockedIps.some(ip => userIp.startsWith(ip));
+    if (isBlocked) {
+      console.log(`Visita ignorada para la IP bloqueada: ${userIp}`);
+      return next(); // Permitimos el acceso, pero no registramos
+    }
+
+    // Verificar si el visitante ya tiene una cookie
     let visitId = req.cookies["visitId"];
     if (!visitId) {
-      visitId = uuidv4(); // Genera un ID único
+      // Si no tiene cookie, generar una nueva e insertarla en la base de datos
+      visitId = uuidv4(); // Generar un ID único
       res.cookie("visitId", visitId, { maxAge: 86400000, httpOnly: true });
-    }
 
-    // Solo registrar la visita si la IP no está bloqueada
-    const isBlocked = blockedIps.some(ip => userIp.startsWith(ip));
-
-    if (!isBlocked) {
-      // Verificar si existe el usuario en la base de datos
-      const checkUserQuery = "SELECT 1 FROM visitas WHERE visitante_id = $1";
-      const result = await pool.query(checkUserQuery, [visitId]);
-
-      if (result.rows.length === 0) {
-        const insertVisitQuery = "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
-        await pool.query(insertVisitQuery, [visitId, userIp]);
-      }
+      // Registrar la visita en la base de datos
+      const insertVisitQuery = "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
+      await pool.query(insertVisitQuery, [visitId, userIp]);
+      console.log("Nueva visita registrada:", visitId);
     } else {
-      console.log(`Visita ignorada para la IP bloqueada: ${userIp}`);
+      console.log("La visita ya tiene cookie. No se registra nuevamente.");
     }
 
-    next(); // Pasamos al siguiente middleware y permitimos que se vea la página
+    next(); // Pasamos al siguiente middleware
   } catch (error) {
     console.error("Error al registrar la visita:", error);
     res.status(500).send("Error interno del servidor.");
   }
 });
-
 
 // Servir el archivo estático index.html
 app.use(express.static(path.join(__dirname, "public")));
