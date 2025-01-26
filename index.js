@@ -69,16 +69,23 @@ app.get("/index.html", async (req, res, next) => {
     // Verificar si el visitante ya tiene una cookie
     let visitId = req.cookies["visitId"];
     if (!visitId) {
-      // Generar una nueva cookie
-      visitId = uuidv4();
-      res.cookie("visitId", visitId, { maxAge: 86400000, httpOnly: true });
+      // Si no tiene una cookie, redirigir a la verificación (Cliente ya puede establecer en localStorage)
+      return next(); // La visita no será registrada hasta que se detecte la cookie
+    }
 
-      // Registrar la visita en la base de datos
+    // Verificar si el visitante ya existe en la base de datos
+    const checkUserQuery = "SELECT 1 FROM visitas WHERE visitante_id = $1";
+    const result = await pool.query(checkUserQuery, [visitId]);
+
+    if (result.rows.length === 0) {
+      // Solo insertamos si el visitante no está en la base de datos
       const insertVisitQuery = "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
       await pool.query(insertVisitQuery, [visitId, userIp]);
 
       // Mensaje único para nuevas visitas
       console.log("Nueva visita registrada:", visitId);
+    } else {
+      console.log(`Visita ya registrada para el visitante ID: ${visitId}`);
     }
 
     next(); // Continuar con otros middlewares
@@ -88,6 +95,7 @@ app.get("/index.html", async (req, res, next) => {
     res.status(500).send("Error interno del servidor.");
   }
 });
+
 
 // Servir el archivo estático index.html
 app.use(express.static(path.join(__dirname, "public")));

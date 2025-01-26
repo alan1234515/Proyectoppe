@@ -309,20 +309,19 @@
     </footer>
       <script>
         // Verificar en localStorage si ya es un visitante
-        if (!localStorage.getItem('visitante')) {
-            // Realizar la verificación con la cookie y el backend para registrar la visita
-            fetch('/')
+    if (!localStorage.getItem('visitante')) {
+        // Realizar la verificación con la cookie y el backend para registrar la visita
+        fetch('/')
+        .then(response => response.text())
+        .then(() => {
+            // Establecer en localStorage que ya ha visitado
+            localStorage.setItem('visitante', 'true');
+        })
+        .catch(error => {
+            console.error("Error al registrar la visita:", error);
+        });
+    }
 
-            .then(response => response.text())
-            .then(() => {
-                // Establecer en localStorage que ya ha visitado
-                localStorage.setItem('visitante', 'true');
-            })
-            .catch(error => {
-                console.error("Error al registrar la visita:", error);
-            });
-        }
-        
         // Muestra el menú móvil cuando se hace clic en el botón
     $('#menu-toggle').click(function () {
         $('#menu-mobile').toggle();
