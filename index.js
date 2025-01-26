@@ -47,7 +47,7 @@ app.get("/", (req, res) => {
 });
 
 // Contar visitas en /index.html
-// Bloquear IPs de UptimeRobot y rango 10.204.x.x
+// Bloquear IPs de UptimeRobot y rango 10.204.x.x solo para registro, no para acceso
 const blockedIps = [
   "216.144.248.29",  // IP fija
   "108.162.245.75",  // IP fija
@@ -60,12 +60,6 @@ app.get("/index.html", async (req, res, next) => {
     const userIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     console.log(userIp);
 
-    // Verificamos si la IP está bloqueada
-    if (blockedIps.some(ip => userIp.startsWith(ip))) {
-      console.log(`Visita bloqueada para la IP de UptimeRobot: ${userIp}`);
-      return res.status(200).send("Página no disponible para esta IP");
-    }
-
     // Verificar si la IP del visitante ya ha sido registrada en cookies
     let visitId = req.cookies["visitId"];
     if (!visitId) {
@@ -73,21 +67,29 @@ app.get("/index.html", async (req, res, next) => {
       res.cookie("visitId", visitId, { maxAge: 86400000, httpOnly: true });
     }
 
-    // Verificar si existe el usuario en la base de datos
-    const checkUserQuery = "SELECT 1 FROM visitas WHERE visitante_id = $1";
-    const result = await pool.query(checkUserQuery, [visitId]);
+    // Solo registrar la visita si la IP no está bloqueada
+    const isBlocked = blockedIps.some(ip => userIp.startsWith(ip));
 
-    if (result.rows.length === 0) {
-      const insertVisitQuery = "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
-      await pool.query(insertVisitQuery, [visitId, userIp]);
+    if (!isBlocked) {
+      // Verificar si existe el usuario en la base de datos
+      const checkUserQuery = "SELECT 1 FROM visitas WHERE visitante_id = $1";
+      const result = await pool.query(checkUserQuery, [visitId]);
+
+      if (result.rows.length === 0) {
+        const insertVisitQuery = "INSERT INTO visitas (visitante_id, ip) VALUES ($1, $2)";
+        await pool.query(insertVisitQuery, [visitId, userIp]);
+      }
+    } else {
+      console.log(`Visita ignorada para la IP bloqueada: ${userIp}`);
     }
 
-    next(); // Pasamos al siguiente middleware
+    next(); // Pasamos al siguiente middleware y permitimos que se vea la página
   } catch (error) {
     console.error("Error al registrar la visita:", error);
     res.status(500).send("Error interno del servidor.");
   }
 });
+
 
 // Servir el archivo estático index.html
 app.use(express.static(path.join(__dirname, "public")));
