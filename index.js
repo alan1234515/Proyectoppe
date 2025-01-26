@@ -55,7 +55,7 @@ app.get("/index.html", async (req, res, next) => {
     // Bloqueamos la IP específica
     if (userIp === "216.144.248.29") {
       console.log(`Visita bloqueada para la IP restringida: ${userIp}`);
-      return next(); // Continuar al servir la página, pero sin registrar la visita
+      return res.status(200).send("Página no disponible para esta IP"); // Retorna sin continuar
     }
 
     // Identificar al usuario por cookie
@@ -85,15 +85,15 @@ app.get("/index.html", async (req, res, next) => {
   }
 });
 
-
 // Servir el archivo estático index.html
 app.use(express.static(path.join(__dirname, "public")));
 
 // Ruta para obtener el total de visitas
 app.get("/total-visitas", async (req, res) => {
   try {
+    // Query para obtener el total de visitas, excluyendo la IP bloqueada
     const result = await pool.query(
-      "SELECT COUNT(*) AS total_visitas FROM visitas"
+      "SELECT COUNT(*) AS total_visitas FROM visitas WHERE ip != '216.144.248.29'"
     );
     const totalVisitas = result.rows[0].total_visitas;
     res.json({ total_visitas: totalVisitas });
