@@ -247,26 +247,21 @@
     </div>
 </nav>
 
-
-    <!-- Sección de libros comunes -->
     <section class="libros-dinamicos" style="margin: 20px 0;">
         <h2 style="text-align: center; color: #e6aa65;">LIBROS MÁS COMUNES</h2>
         <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 20px;">
-            <!-- Ejemplo de tarjeta -->
             <div class="tarjeta" style="width: 200px; text-align: center; background-color: rgb(255, 255, 255); border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                 <img src="Imagenes\Portada Harry poter.png" alt="Portada del libro" style="width: 100%; height: auto; border-top-left-radius: 8px; border-top-right-radius: 8px;">
                 <h3 style="margin: 10px 0; font-size: 1.1em; color: #555;">Harry Potter</h3>
                  <p style="font-size: 0.9em; color: #777; margin: 5px 0;">Autor: J. K. Rowling</p>
                 <a href="https://fecolsa.com.co/upload/Actividades%20Equilibrio%20Total/Rowling,%20J.%20K.%20-%20%20Harry%20Potter%20y%20la%20piedra%20filosofal.pdf" style="display: inline-block; margin-bottom: 10px; padding: 10px 15px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; transition: background-color 0.3s;">Leer Libro</a>
             </div>
-            <!-- Otras tarjetas de libros -->
             <div class="tarjeta" style="width: 200px; text-align: center; background-color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                 <img src="Imagenes\El castillo ambulante.png" alt="Portada del libro" style="width: 100%; height: auto; border-top-left-radius: 8px; border-top-right-radius: 8px;">
                 <h3 style="margin: 10px 0; font-size: 1.1em; color: #555;">El castillo ambulante</h3>
                  <p style="font-size: 0.9em; color: #777; margin: 5px 0;">Autor: Diana Wynne Jones</p>
                 <a href="https://drive.google.com/file/d/1zw2GgD-vAIrMWGgJhin68Vh4sgP9UPYQ/view?usp=sharing" style="display: inline-block; margin-bottom: 10px; padding: 10px 15px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; transition: background-color 0.3s;">Leer Libro</a>
             </div>
-            <!-- Más tarjetas según sea necesario -->
                   <div style="width: 200px; text-align: center; background-color: rgb(255, 255, 255); border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                 <img src="Imagenes\Robot Salvaje.png" alt="Portada del libro" style="width: 100%; height: auto; border-top-left-radius: 8px; border-top-right-radius: 8px;">
                 <h3 style="margin: 10px 0; font-size: 1.1em; color: #555;">Robot Salvaje</h3>
@@ -282,14 +277,12 @@
             </div>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 20px;">
-            <!-- Ejemplo de tarjeta -->
             <div style="width: 200px; text-align: center; background-color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                 <img src="Imagenes\Sal de tu mente entra en tu vida.png" alt="Portada del libro" style="width: 100%; height: auto; border-top-left-radius: 8px; border-top-right-radius: 8px;">
                 <h3 style="margin: 10px 0; font-size: 1.1em; color: #555;">Sal de tu mente entra en tu vida</h3>
                 <p style="font-size: 0.9em; color: #777; margin: 5px 0;">Autor: Steven C. Hayes</p>
                 <a href="https://www.edesclee.com/img/cms/pdfs/9788433028389.pdf" style="display: inline-block; margin-bottom: 10px; padding: 10px 15px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; transition: background-color 0.3s;">Leer Libro</a>
             </div>
-            <!-- Agregar más tarjetas con el mismo diseño -->
             <div style="width: 200px; text-align: center; background-color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                 <img src="Imagenes\Lazarillo.png" alt="Portada del libro" style="width: 100%; height: auto; border-top-left-radius: 8px; border-top-right-radius: 8px;">
                 <h3 style="margin: 10px 0; font-size: 1.1em; color: #555;">Lazarillo de tormes</h3>
@@ -297,7 +290,6 @@
                 <a href="https://drive.google.com/file/d/16Bpm3lbBWJvhE_sWUpobnwaO4_mb4YhS/view?usp=sharing" style="display: inline-block; margin-bottom: 10px; padding: 10px 15px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; transition: background-color 0.3s;">Leer Libro</a>
             </div>
         </div>
-    <!-- Pie de página -->
     <footer style="background-color: #333; color: white; text-align: center; padding: 20px; border-radius: 8px; margin-top: 20px;">
         <p style="font-size: 1.2em;">&copy; 2025 2 "B" Informática. ©Todos los derechos reservados.</p>
         <div style="font-size: 1.5em;">
@@ -308,29 +300,27 @@
         </div>
     </footer>
       <script>
-        // Verificar en localStorage si ya es un visitante
+
         if (!localStorage.getItem('visitante')) {
-            // Realizar la verificación con la cookie y el backend para registrar la visita
+
             fetch('/')
 
             .then(response => response.text())
             .then(() => {
-                // Establecer en localStorage que ya ha visitado
+
                 localStorage.setItem('visitante', 'true');
             })
             .catch(error => {
                 console.error("Error al registrar la visita:", error);
             });
         }
-        
-        // Muestra el menú móvil cuando se hace clic en el botón
+
     $('#menu-toggle').click(function () {
         $('#menu-mobile').toggle();
     });
 
-    // Función para actualizar las visitas
     function actualizarVisitas() {
-        fetch('/total-visitas') // Solicitud al servidor
+        fetch('/total-visitas')
         .then(response => response.json()) 
         .then(data => {
             document.getElementById('total-visitas').innerText = data.total_visitas;
@@ -341,9 +331,9 @@
         });
     }
 
-    // Llamada a la función cuando se carga la página
+
     window.onload = function() {
-        actualizarVisitas(); // Actualiza las visitas
+        actualizarVisitas(); 
     };
          
     </script>
