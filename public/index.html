@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/umd/uuid.min.js"></script>
      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        /* Estilos generales */
         body {
             background-color: #c9eef6;
             padding: 0;
@@ -16,7 +15,6 @@
             font-family: Arial, sans-serif;
         }
 
-        /* Header */
         header {
             background-color: #c9eef6;
             text-align: center;
@@ -39,14 +37,13 @@
             margin-right: 10px;
         }
 
-        /* Menú */
         nav .menu {
-            background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro con transparencia */
+            background-color: rgba(0, 0, 0, 0.6); 
             padding: 10px;
             text-align: center;
             border-radius: 8px;
             position: relative;
-            backdrop-filter: blur(5px); /* Aplicar un efecto de desenfoque */
+            backdrop-filter: blur(5px); 
         }
 
         .menu ul {
@@ -71,7 +68,6 @@
             background-color: #555;
         }
 
-        /* Menú responsive (móvil) */
         .menu-icon {
             display: none;
             font-size: 2em;
@@ -103,7 +99,6 @@
             background-color: #555;
         }
 
-        /* Tarjetas de libros */
         .tarjeta {
             width: 200px;
             text-align: center;
@@ -142,7 +137,6 @@
             transition: background-color 0.3s;
         }
 
-        /* Estilos para pantallas pequeñas */
         @media (max-width: 767px) {
             .titulo-eslogan h1 {
                 font-size: 1.5em;
@@ -179,7 +173,6 @@
             }
         }
 
-        /* Estilos para pantallas grandes */
         @media (min-width: 768px) {
             .menu ul {
                 display: flex;
@@ -189,7 +182,7 @@
                 margin-right: 20px;
             }
 
-            /* Fondo del menú con desenfoque */
+
             nav {
                 background-image: url('Imagenes/fondo-menu.jpg');
                 background-size: cover;
@@ -198,21 +191,20 @@
             }
 
             .menu {
-                background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro con transparencia */
-                backdrop-filter: blur(5px); /* Efecto de desenfoque */
+                background-color: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(5px);
             }
         }
     </style>
 </head>
 <body style="background-color:#c9eef6; padding: 20px; margin: 0; font-family: Arial, sans-serif;">
 
-    <!-- Header con título, eslogan y logos -->
     <header style="background-color:#c9eef6; text-align: center; padding-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
-        <!-- Logo a la izquierda -->
+
         <div style="flex: 0 0 auto; margin-left: 20px;">
             <img src="Imagenes/Logo.png" alt="Logo Título" style="width: 160px; height: 160px;">
         </div>
-        <!-- Título y eslogan centrados -->
+
         <div class="titulo-eslogan" style="text-align: center; flex-grow: 1; padding: 10px;">
             <h1 style="color: #2e7d32; font-size: 2.5em;">UNIDAD EDUCATIVA FISCOMISIONAL <br> "MARÍA AUXILIADORA"</h1>
             <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
@@ -221,14 +213,11 @@
             </div>
         </div>
     </header>
-    <!-- Menú con subcategorías -->
-     <!-- Menú con subcategorías -->
-<!-- Menú con subcategorías -->
+
 <nav class="menu">
-    <!-- Ícono de menú en móvil -->
+
     <button class="menu-icon" id="menu-toggle"><i class="bi bi-list"></i></button>
 
-    <!-- Menú en escritorio -->
     <ul>
         <li><a href="/categoria.html">CATEGORIAS</a></li>
         <li><a href="Importancia de leer/Importancia_de_leer.html">IMPORTANCIA DE LEER</a></li>
@@ -237,7 +226,6 @@
         <li><a href="javascript:void(0)">VISITAS: <span id="total-visitas">Cargando...</span></a></li>
     </ul>
 
-    <!-- Menú en móvil -->
     <div class="menu-mobile" id="menu-mobile">
         <a href="/categoria.html">CATEGORIAS</a>
         <a href="Importancia de leer/Importancia_de_leer.html">IMPORTANCIA DE LEER</a>
